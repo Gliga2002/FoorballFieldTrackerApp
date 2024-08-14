@@ -13,6 +13,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,16 +30,17 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// TODO ipak treba parametar da se prosledi!!!!
+
 enum class Screens {
     Login,
     Register,
     GoogleMap
 }
 
+// TODO Nije lose da view model koji ne zahteva factory, ovde init u root component!!!!
 
 @Composable
-fun ProfileApp(currentUserViewModel: CurrentUserViewModel) {
+fun ProfileApp() {
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val startingScreen =
         if (firebaseUser == null){
@@ -46,22 +48,21 @@ fun ProfileApp(currentUserViewModel: CurrentUserViewModel) {
         }else{
             Screens.GoogleMap.name
         }
-    FootballFieldApp(currentUserViewModel, startingScreen = startingScreen)
+    FootballFieldApp( startingScreen = startingScreen)
 }
-
 
 
 
 // TODO: u zavisnosti od starting screen, ces da pokazes topbar
 @Composable
 fun FootballFieldApp(
-    currentUserViewModel: CurrentUserViewModel,
+    currentUserViewModel: CurrentUserViewModel = viewModel(),
     startingScreen: String,
-    navController: NavHostController = rememberNavController(),
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 ) {
 
+    val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val coroutineScope: CoroutineScope = rememberCoroutineScope()
+    val navController: NavHostController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route ?: Screens.Register.name
 
     ModalNavigationDrawer(
@@ -73,17 +74,16 @@ fun FootballFieldApp(
             ) {
                 DrawerContent(
                     menus = menus,
-                    onMenuClick = { route ->
-                    coroutineScope.launch {
-                        drawerState.close()
-                    }
-                    navController.navigate(route)
-                },
-                    onClose = {
+                    currentUserViewModel = currentUserViewModel,
+                    onAction = { route ->
                         coroutineScope.launch {
-                            drawerState.close()
+                            drawerState.close() // Zatvori drawer u oba slučaja
+                            route?.let {
+                                navController.navigate(it) // Navigiraj ako ruta nije null
+                            }
                         }
                     }
+
 
                 )
             }
