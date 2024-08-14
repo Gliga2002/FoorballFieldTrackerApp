@@ -1,18 +1,16 @@
 package com.example.footballfieldtracker.ui.layout.drawer
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
@@ -28,12 +26,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.footballfieldtracker.ui.Screens
+import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModel
+
 
 data class DrawerMenu(val icon: ImageVector, val title: String, val route: String)
 
@@ -46,25 +51,32 @@ val menus = arrayOf(
 @Composable
 fun DrawerContent(
     menus: Array<DrawerMenu>,
-    onMenuClick: (String) -> Unit,
-    onClose: () -> Unit
+    currentUserViewModel: CurrentUserViewModel,
+    onAction: (String?) -> Unit // Jedna funkcija koja prihvata String? za razliku akcija
 ) {
+
+
+    val name = "${currentUserViewModel.currentUser.value?.firstName} ${currentUserViewModel.currentUser.value?.lastName}" // Kombinujte kapitalizovana imena
+    val imageUrl = currentUserViewModel.currentUser.value?.photoPath
+    val userEmail = currentUserViewModel.currentUser.value?.email
+    val phoneNumber = currentUserViewModel.currentUser.value?.phoneNumber
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(270.dp)
             .background(Color(0xFF3DDC84)),
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             // Tekst centriran u odnosu na celu širinu
             Text(
-                text = "Darko Gligorijevic",
+                text = name ,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth(),
@@ -73,7 +85,7 @@ fun DrawerContent(
 
             // IconButton skroz desno
             IconButton(
-                onClick = onClose,
+                onClick = { onAction(null) },
                 modifier = Modifier
                     .size(36.dp)
                     .align(Alignment.CenterEnd)
@@ -85,12 +97,19 @@ fun DrawerContent(
                 )
             }
         }
-        // na pojedinacn text ces staviti color  Color(0xFF3ddc84)
-        Image(
-            modifier = Modifier.size(150.dp),
-            imageVector = Icons.Filled.AccountCircle,
-            contentScale = ContentScale.Crop,
-            contentDescription = null
+        // Mozes da refactor one dve slike
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .build(),
+            modifier = Modifier
+                .size(150.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop ,
+            placeholder = rememberVectorPainter(image = Icons.Default.AccountCircle),
+            error = rememberVectorPainter(image = Icons.Default.AccountCircle),
+            contentDescription = null,
         )
         Column(
             modifier = Modifier
@@ -109,7 +128,7 @@ fun DrawerContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp)) // Razmak između ikone i teksta
                 Text(
-                    text = "email@example.com", // Dummy email tekst
+                    text = userEmail ?: "", // Dummy email tekst
                 )
             }
 
@@ -126,7 +145,7 @@ fun DrawerContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp)) // Razmak između ikone i teksta
                 Text(
-                    text = "+1234567890", // Dummy broj telefona tekst
+                    text = phoneNumber ?: "", // Dummy broj telefona tekst
                 )
             }
         }
@@ -139,7 +158,7 @@ fun DrawerContent(
             icon = { Icon(imageVector = it.icon, contentDescription = null) },
             selected = false,
             onClick = {
-                onMenuClick(it.route)
+                onAction(it.route)
             }
         )
     }
