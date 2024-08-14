@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "339665684983",
+    "project_id": "footballfieldtracker",
+    "storage_bucket": "footballfieldtracker.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339665684983:android:3b8735d6154232cf0586f2",
+        "android_client_info": {
+          "package_name": "com.example.footballfieldtracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWFlWbt0lYh77-LON29xsHrrLfIslzaLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
