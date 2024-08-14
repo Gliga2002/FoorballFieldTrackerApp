@@ -1,6 +1,5 @@
 package com.example.footballfieldtracker.ui.layout.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,16 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.R
-import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 // TODO: Validacija
 
 @Composable
-fun LoginScreen(navController: NavController, currentUserViewModel: CurrentUserViewModel) {
+fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
     val context = LocalContext.current
     val email = remember {
         mutableStateOf("")
@@ -87,7 +83,7 @@ fun LoginScreen(navController: NavController, currentUserViewModel: CurrentUserV
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
                         Icon(
-                            painterResource( if (passwordVisible.value)R.drawable.visibility_24 else R.drawable.visibility_off_24),
+                            painterResource(if (passwordVisible.value) R.drawable.visibility_24 else R.drawable.visibility_off_24),
                             contentDescription = "Password visibility",
                             tint = if (passwordVisible.value) colorResource(id = R.color.purple_700) else Color.Gray
                         )
@@ -102,53 +98,16 @@ fun LoginScreen(navController: NavController, currentUserViewModel: CurrentUserV
             Spacer(modifier = Modifier.padding(10.dp))
             Button(
                 onClick = {
-                    FirebaseAuth.getInstance()
-                        .signInWithEmailAndPassword(email.value, password.value)
-                        .addOnSuccessListener() {
-                            // User login successful, retrieve user details from Firestore
-                            val user = FirebaseAuth.getInstance().currentUser
-                            val uid = user?.uid ?: ""
-
-                            // Fetch user details from Firestore
-                            FirebaseFirestore.getInstance().collection("users")
-                                .document(uid)
-                                .get()
-                                .addOnSuccessListener { document ->
-                                    if (document != null && document.exists()) {
-                                        // User document exists, extract user data
-                                        val userData = document.toObject(User::class.java)
-                                        userData?.let { currentUser ->
-                                            Log.d("UserData", "User ID: ${currentUser.id}")
-                                            Log.d("UserData", "Email: ${currentUser.email}")
-                                            Log.d("UserData", "Username: ${currentUser.username}")
-                                            Log.d("UserData", "First Name: ${currentUser.firstName}")
-                                            Log.d("UserData", "Last Name: ${currentUser.lastName}")
-                                            Log.d("UserData", "Phone Number: ${currentUser.phoneNumber}")
-                                            Log.d("UserData", "Score: ${currentUser.score}")
-                                            Log.d("UserData", "Liked Reviews: ${currentUser.likedReviews.joinToString()}")
-                                            Log.d("UserData", "Photo Path: ${currentUser.photoPath}")
-                                            // Set the current user in the ViewModel
-                                            currentUserViewModel.setCurrentUser(currentUser)
-                                            navController.navigate(Screens.GoogleMap.name)
-                                        }
-
-                                    } else {
-                                        // Handle if the user document doesn't exist
-                                        Log.d("UserData", "No such document")
-
-                                    }
-                                }
-                                .addOnFailureListener {
-                                    // Handle any errors while fetching user details
-                                    Log.e("UserData", "Error getting document", it)
-                                }
-
-
+                    userViewModel.loginUserWithEmailAndPassword(
+                        email.value,
+                        password.value
+                    ) { success ->
+                        if (success) {
+                            navController.navigate(Screens.GoogleMap.name)
+                        } else {
+                            Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                         }
-                        .addOnFailureListener {
-                            // TODO: STAVI TOST
-                            Toast.makeText(context,it.message, Toast.LENGTH_SHORT).show()
-                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)

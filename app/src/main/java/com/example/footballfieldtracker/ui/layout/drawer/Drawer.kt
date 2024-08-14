@@ -36,8 +36,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 
 data class DrawerMenu(val icon: ImageVector, val title: String, val route: String)
@@ -51,15 +52,15 @@ val menus = arrayOf(
 @Composable
 fun DrawerContent(
     menus: Array<DrawerMenu>,
-    currentUserViewModel: CurrentUserViewModel,
+    currentUser: User?,
     onAction: (String?) -> Unit // Jedna funkcija koja prihvata String? za razliku akcija
 ) {
 
 
-    val name = "${currentUserViewModel.currentUser.value?.firstName} ${currentUserViewModel.currentUser.value?.lastName}" // Kombinujte kapitalizovana imena
-    val imageUrl = currentUserViewModel.currentUser.value?.photoPath
-    val userEmail = currentUserViewModel.currentUser.value?.email
-    val phoneNumber = currentUserViewModel.currentUser.value?.phoneNumber
+    val name = "${currentUser?.firstName} ${currentUser?.lastName}" // Kombinujte kapitalizovana imena
+    val imageUrl = currentUser?.photoPath
+    val userEmail = currentUser?.email
+    val phoneNumber = currentUser?.phoneNumber
 
     Column(
         modifier = Modifier

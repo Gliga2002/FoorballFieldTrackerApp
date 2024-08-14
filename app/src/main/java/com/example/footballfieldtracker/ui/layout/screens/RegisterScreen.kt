@@ -1,6 +1,7 @@
 package com.example.footballfieldtracker.ui.layout.screens
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -56,7 +58,7 @@ import com.google.firebase.storage.FirebaseStorage
 // Todo: Validacija inputa (pogledaj CampLife kako izvrsila validaciju) i proveri da li radi
 // Todo: Refactor ovo u view model da prezivi configuration changes
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
     // Definišemo state za sve inpute
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
@@ -235,44 +237,22 @@ fun RegisterScreen(navController: NavController) {
             val context = LocalContext.current
             Button(
                 onClick = {
-                    if (password.value == confirmPassword.value) {
-                        // Kreiranje korisnika u Firebase Auth
-                        FirebaseAuth.getInstance().createUserWithEmailAndPassword(
+                        userViewModel.registerUser(
                             email.value,
-                            password.value
-                        ).addOnSuccessListener {
-                            val userId = FirebaseAuth.getInstance().currentUser?.uid
-                            val user = mapOf(
-                                "id" to userId,
-                                "email" to email.value,
-                                "username" to username.value,
-                                "firstName" to firstName.value,
-                                "lastName" to lastName.value,
-                                "phoneNumber" to phoneNumber.value,
-                                "score" to 0,
-                                "likedReviews" to mutableListOf<String>(),
-                                "photoPath" to ""
-                            )
-
-                            if (userId != null && imageUri != null) {
-                                FirebaseFirestore.getInstance().collection("users").document(userId)
-                                    .set(user)
-                                    .addOnSuccessListener {
-                                        // Uspešno kreiran korisnik u Firestore
-                                        updateProfilePicture(imageUri!!) {
-                                            navController.navigate(
-                                                Screens.Login.name
-                                            )
-                                        }
-                                    }
-                                    .addOnFailureListener {
-                                        // Handle Firestore error
-                                    }
-                            }
-                        }.addOnFailureListener {
-                            // Handle authentication error
+                            password.value,
+                            confirmPassword.value,
+                            username.value,
+                            firstName.value,
+                            lastName.value,
+                            phoneNumber.value,
+                            imageUri
+                        ) { success ->
+                           if (success) {
+                               navController.navigate(Screens.Login.name)
+                           } else {
+                               Toast.makeText(context, "Register failed", Toast.LENGTH_SHORT).show()
+                           }
                         }
-                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)

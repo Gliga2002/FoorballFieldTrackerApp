@@ -10,13 +10,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.footballfieldtracker.ui.ProfileApp
+import com.example.footballfieldtracker.ui.FootballFieldApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
-import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModelFactory
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 class MainActivity : ComponentActivity() {
-    private val currentUserViewModel: CurrentUserViewModel by viewModels()
+
+    private val userViewModel: UserViewModel by viewModels {
+        CurrentUserViewModelFactory((application as MainApplication).container.userRepository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
         super.onCreate(savedInstanceState)
         setContent {
             FootballFieldTrackerTheme {
@@ -25,7 +32,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ProfileApp(currentUserViewModel)
+                    FootballFieldApp(userViewModel)
                 }
             }
         }
