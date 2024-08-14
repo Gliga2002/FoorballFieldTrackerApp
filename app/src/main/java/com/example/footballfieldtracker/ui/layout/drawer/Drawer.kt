@@ -64,7 +64,7 @@ fun DrawerContent(
         ) {
             // Tekst centriran u odnosu na celu širinu
             Text(
-                text = "Tvoj Tekst",
+                text = "Darko Gligorijevic",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth(),
