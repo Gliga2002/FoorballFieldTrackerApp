@@ -8,6 +8,8 @@ import com.example.footballfieldtracker.ui.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 
 class UserRepository(
@@ -15,6 +17,13 @@ class UserRepository(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage
 ) {
+
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser
+
+    fun updateCurrentUser(user: User?) {
+        _currentUser.value = user
+    }
 
 
     fun loginWithEmailAndPassword(

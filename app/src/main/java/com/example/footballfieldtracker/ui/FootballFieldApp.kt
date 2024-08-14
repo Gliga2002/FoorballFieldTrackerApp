@@ -2,6 +2,7 @@ package com.example.footballfieldtracker.ui
 
 
 
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerState
@@ -27,6 +28,7 @@ import com.example.footballfieldtracker.ui.layout.screens.RegisterScreen
 import com.example.footballfieldtracker.ui.layout.topappbar.CustomAppBar
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -41,9 +43,12 @@ enum class Screens {
 @Composable
 fun FootballFieldApp(
     loginViewModel: LoginViewModel,
-    registerViewModel: RegisterViewModel
+    registerViewModel: RegisterViewModel,
+    userViewModel: UserViewModel
 ) {
-    val currentUser by loginViewModel.currentUser.collectAsState()
+    val currentUser by userViewModel.currentUser.collectAsState()
+
+    currentUser?.username?.let { Log.d("CurrentUser", it) }
 
     val startDestination = if (currentUser != null) Screens.GoogleMap.name else Screens.Login.name
 

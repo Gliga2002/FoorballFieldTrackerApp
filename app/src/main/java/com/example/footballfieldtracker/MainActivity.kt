@@ -16,6 +16,8 @@ import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModelFactory
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModelFactory
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.UserViewModelFactory
 
 
 class MainActivity : ComponentActivity() {
@@ -26,6 +28,10 @@ class MainActivity : ComponentActivity() {
 
     private val registerViewModel: RegisterViewModel by viewModels {
         RegisterViewModelFactory((application as MainApplication).container.userRepository)
+    }
+
+    private val userViewModel: UserViewModel by viewModels {
+        UserViewModelFactory((application as MainApplication).container.userRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +45,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FootballFieldApp(loginViewModel, registerViewModel)
+                    FootballFieldApp(loginViewModel, registerViewModel, userViewModel)
                 }
             }
         }

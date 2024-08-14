@@ -21,16 +21,7 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
     var passwordVisible by  mutableStateOf(false)
 
 
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser
 
-    init {
-        loadCurrentUser()
-    }
-
-    private fun setCurrentUser(user: User?) {
-        _currentUser.value = user
-    }
 
     // Funkcija za resetovanje stanja na početne vrednosti
     fun resetState() {
@@ -47,7 +38,7 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
         viewModelScope.launch {
             userRepository.loginWithEmailAndPassword(email, password) { user ->
                 if (user != null) {
-                    setCurrentUser(user)
+                    userRepository.updateCurrentUser(user) // Update the current user in the repository
                     callback(true) // Success
                 } else {
                     callback(false) // Failure
@@ -63,23 +54,14 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
             userRepository.signOut { success ->
                 if (success) {
                     // Clear current user data if sign-out is successful
-                    _currentUser.value = null
+                    userRepository.updateCurrentUser(null)
                 }
                 callback(success)
             }
         }
     }
 
-    // Hmmm
-    fun loadCurrentUser(
-    ) {
-        viewModelScope.launch {
-            userRepository.fetchCurrentUser { user ->
-                setCurrentUser(user)
-            }
-        }
 
-    }
 }
 
 class LoginViewModelFactory(private val userRepository: UserRepository) : ViewModelProvider.Factory {
