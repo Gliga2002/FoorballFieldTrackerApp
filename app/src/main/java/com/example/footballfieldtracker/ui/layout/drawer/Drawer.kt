@@ -38,7 +38,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 
 data class DrawerMenu(val icon: ImageVector, val title: String, val route: String)

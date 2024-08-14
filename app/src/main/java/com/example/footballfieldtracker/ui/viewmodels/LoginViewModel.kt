@@ -1,8 +1,8 @@
 package com.example.footballfieldtracker.ui.viewmodels
 
-import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,10 +10,16 @@ import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
 import kotlinx.coroutines.launch
 
-class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
+
+class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
+
+    var email by mutableStateOf("")
+    var password by  mutableStateOf("")
+
+    var passwordVisible by  mutableStateOf(false)
+
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
@@ -24,6 +30,13 @@ class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     private fun setCurrentUser(user: User?) {
         _currentUser.value = user
+    }
+
+    // Funkcija za resetovanje stanja na početne vrednosti
+    fun resetState() {
+        email = ""
+        password = ""
+        passwordVisible = false
     }
 
     fun loginUserWithEmailAndPassword(
@@ -43,36 +56,7 @@ class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
         }
     }
 
-    fun registerUser(
-        email: String,
-        password: String,
-        confirmPassword: String,
-        username: String,
-        firstName: String,
-        lastName: String,
-        phoneNumber: String,
-        imageUri: Uri?,
-        callback: (Boolean) -> Unit
-    ) {
-        if (password != confirmPassword) {
-            callback(false)
-            return
-        }
 
-        viewModelScope.launch {
-            userRepository.registerUser(
-                email,
-                password,
-                username,
-                firstName,
-                lastName,
-                phoneNumber,
-                imageUri
-            ) { success ->
-                callback(success)
-            }
-        }
-    }
 
     fun signOut(callback: (Boolean) -> Unit) {
         viewModelScope.launch {
@@ -96,21 +80,14 @@ class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
         }
 
     }
-
 }
 
-
-    class CurrentUserViewModelFactory(
-        private val userRepository: UserRepository
-    ) : ViewModelProvider.Factory {
-
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
-                return UserViewModel(userRepository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
+class LoginViewModelFactory(private val userRepository: UserRepository) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+            return LoginViewModel(userRepository) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
-
-
+}

@@ -16,14 +16,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomAppBar(
     drawerState: DrawerState,
-    userViewModel: UserViewModel,
+    loginViewModel: LoginViewModel,
     navController: NavHostController
 ) {
 
@@ -57,7 +57,7 @@ fun CustomAppBar(
             if (currentRoute !in listOf(Screens.Login.name, Screens.Register.name)) {
                 IconButton(onClick = {
                     // Izvrši logout operaciju i navigiraj na Login ekran
-                    userViewModel.signOut { success ->
+                    loginViewModel.signOut { success ->
                         if (success) {
                             navController.navigate(Screens.Login.name) {
                                 popUpTo(Screens.GoogleMap.name) { inclusive = true }

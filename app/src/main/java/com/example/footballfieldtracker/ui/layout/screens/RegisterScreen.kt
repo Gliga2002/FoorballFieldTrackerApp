@@ -1,6 +1,5 @@
 package com.example.footballfieldtracker.ui.layout.screens
 
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,9 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,10 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,28 +42,16 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
+import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 
 // Todo: Validacija inputa (pogledaj CampLife kako izvrsila validaciju) i proveri da li radi
 // Todo: Refactor ovo u view model da prezivi configuration changes
 @Composable
-fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
-    // Definišemo state za sve inpute
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-    val confirmPassword = remember { mutableStateOf("") }
-    val username = remember { mutableStateOf("") }
-    val firstName = remember { mutableStateOf("") }
-    val lastName = remember { mutableStateOf("") }
-    val phoneNumber = remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+fun RegisterScreen(
+    registerViewModel: RegisterViewModel,
+    navController: NavController
+) {
 
-
-    val passwordVisible = remember { mutableStateOf(false) }
-    val confirmPasswordVisible = remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
 
@@ -95,8 +75,8 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za username
             OutlinedTextField(
-                value = username.value,
-                onValueChange = { username.value = it },
+                value = registerViewModel.username,
+                onValueChange = { registerViewModel.username = it },
                 label = { Text(text = "Username") },
                 placeholder = { Text(text = "Username") },
                 singleLine = true,
@@ -111,8 +91,8 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za first name
             OutlinedTextField(
-                value = firstName.value,
-                onValueChange = { firstName.value = it },
+                value = registerViewModel.firstName,
+                onValueChange = { registerViewModel.firstName = it },
                 label = { Text(text = "First Name") },
                 placeholder = { Text(text = "First Name") },
                 singleLine = true,
@@ -127,8 +107,8 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za last name
             OutlinedTextField(
-                value = lastName.value,
-                onValueChange = { lastName.value = it },
+                value = registerViewModel.lastName,
+                onValueChange = { registerViewModel.lastName = it },
                 label = { Text(text = "Last Name") },
                 placeholder = { Text(text = "Last Name") },
                 singleLine = true,
@@ -143,8 +123,8 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za phone number
             OutlinedTextField(
-                value = phoneNumber.value,
-                onValueChange = { phoneNumber.value = it },
+                value = registerViewModel.phoneNumber,
+                onValueChange = { registerViewModel.phoneNumber = it },
                 label = { Text(text = "Phone Number") },
                 placeholder = { Text(text = "Phone Number") },
                 singleLine = true,
@@ -160,8 +140,8 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za email
             OutlinedTextField(
-                value = email.value,
-                onValueChange = { email.value = it },
+                value = registerViewModel.email,
+                onValueChange = { registerViewModel.email = it },
                 label = { Text(text = "Email address") },
                 placeholder = { Text(text = "Email address") },
                 singleLine = true,
@@ -177,12 +157,14 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za password
             OutlinedTextField(
-                value = password.value,
-                onValueChange = { password.value = it },
+                value = registerViewModel.password,
+                onValueChange = { registerViewModel.password = it },
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
+                    IconButton(onClick = {
+                        registerViewModel.passwordVisible = !registerViewModel.passwordVisible
+                    }) {
                         Icon(
-                            painterResource( if (passwordVisible.value)R.drawable.visibility_24 else R.drawable.visibility_off_24),
+                            painterResource(if (registerViewModel.passwordVisible) R.drawable.visibility_24 else R.drawable.visibility_off_24),
                             contentDescription = "Password visibility",
                         )
                     }
@@ -190,7 +172,7 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
                 label = { Text(text = "Password") },
                 placeholder = { Text(text = "Password") },
                 singleLine = true,
-                visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (registerViewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.Next
                 ),
@@ -202,14 +184,15 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             // Polje za confirm password
             OutlinedTextField(
-                value = confirmPassword.value,
-                onValueChange = { confirmPassword.value = it },
+                value = registerViewModel.confirmPassword,
+                onValueChange = { registerViewModel.confirmPassword = it },
                 trailingIcon = {
                     IconButton(onClick = {
-                        confirmPasswordVisible.value = !confirmPasswordVisible.value
+                        registerViewModel.confirmPasswordVisible =
+                            !registerViewModel.confirmPasswordVisible
                     }) {
                         Icon(
-                            painterResource( if (passwordVisible.value)R.drawable.visibility_24 else R.drawable.visibility_off_24),
+                            painterResource(if (registerViewModel.confirmPasswordVisible) R.drawable.visibility_24 else R.drawable.visibility_off_24),
                             contentDescription = "Password visibility"
                         )
                     }
@@ -217,7 +200,7 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
                 label = { Text(text = "Confirm Password") },
                 placeholder = { Text(text = "Confirm Password") },
                 singleLine = true,
-                visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (registerViewModel.confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.Done
                 ),
@@ -229,30 +212,31 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
 
             Spacer(modifier = Modifier.padding(12.dp))
 
-            ProfileImage(imageUri) { newUri ->
-                imageUri = newUri // Ažurira sliku kada korisnik izabere novu
+            ProfileImage(registerViewModel.imageUri) { newUri ->
+                registerViewModel.imageUri = newUri // Ažurira sliku kada korisnik izabere novu
             }
 
             Spacer(modifier = Modifier.padding(12.dp))
             val context = LocalContext.current
             Button(
                 onClick = {
-                        userViewModel.registerUser(
-                            email.value,
-                            password.value,
-                            confirmPassword.value,
-                            username.value,
-                            firstName.value,
-                            lastName.value,
-                            phoneNumber.value,
-                            imageUri
-                        ) { success ->
-                           if (success) {
-                               navController.navigate(Screens.Login.name)
-                           } else {
-                               Toast.makeText(context, "Register failed", Toast.LENGTH_SHORT).show()
-                           }
+                    registerViewModel.registerUser(
+                        registerViewModel.email,
+                        registerViewModel.password,
+                        registerViewModel.confirmPassword,
+                        registerViewModel.username,
+                        registerViewModel.firstName,
+                        registerViewModel.lastName,
+                        registerViewModel.phoneNumber,
+                        registerViewModel.imageUri
+                    ) { success, errorMsg ->
+                        if (success) {
+                            navController.navigate(Screens.Login.name)
+                            registerViewModel.resetState()
+                        } else {
+                            Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
                         }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
@@ -278,31 +262,5 @@ fun RegisterScreen(userViewModel: UserViewModel, navController: NavController) {
             }
             Spacer(modifier = Modifier.padding(20.dp))
         }
-    }
-}
-
-private fun updateProfilePicture(uri: Uri, onNavigateToLogin: () -> Unit) {
-    val riversRef =
-        FirebaseStorage.getInstance().getReference("profile_pictures/${FirebaseAuth.getInstance().currentUser?.uid.toString()}")
-    val uploadTask = riversRef.putFile(uri)
-
-// Register observers to listen for when the download is done or if it fails
-    uploadTask.addOnFailureListener {
-        // Handle unsuccessful uploads
-    }.addOnSuccessListener { taskSnapshot ->
-        // taskSnapshot.metadata contains file metadata such as size, content-type, etc.
-        taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
-            FirebaseFirestore.getInstance().collection("users")
-                .document(FirebaseAuth.getInstance().currentUser?.uid.toString())
-                .update("photoPath", uri.toString())
-                .addOnSuccessListener {
-                    // Navigiraj na drugi ekran nakon uspešnog ažuriranja
-                    onNavigateToLogin()
-                }
-                .addOnFailureListener { e ->
-                    // Handle failure in Firestore update
-                }
-        }
-
     }
 }

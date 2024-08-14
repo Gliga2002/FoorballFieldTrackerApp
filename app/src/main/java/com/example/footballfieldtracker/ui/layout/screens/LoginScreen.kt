@@ -36,23 +36,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 
 // TODO: Validacija
 
 @Composable
-fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
+fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
     val context = LocalContext.current
-    val email = remember {
-        mutableStateOf("")
-    }
-    val password = remember {
-        mutableStateOf("")
-    }
 
-    val passwordVisible = remember {
-        mutableStateOf(false)
-    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -70,40 +61,41 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
         Spacer(modifier = Modifier.padding(20.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             OutlinedTextField(
-                value = email.value,
-                onValueChange = { email.value = it },
+                value = loginViewModel.email,
+                onValueChange = { loginViewModel.email = it },
                 label = { Text(text = "Email address") },
                 placeholder = { Text(text = "Email address") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
             OutlinedTextField(
-                value = password.value,
-                onValueChange = { password.value = it },
+                value = loginViewModel.password,
+                onValueChange = { loginViewModel.password = it },
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
+                    IconButton(onClick = { loginViewModel.passwordVisible = !loginViewModel.passwordVisible }) {
                         Icon(
-                            painterResource(if (passwordVisible.value) R.drawable.visibility_24 else R.drawable.visibility_off_24),
+                            painterResource(if (loginViewModel.passwordVisible) R.drawable.visibility_24 else R.drawable.visibility_off_24),
                             contentDescription = "Password visibility",
-                            tint = if (passwordVisible.value) colorResource(id = R.color.purple_700) else Color.Gray
+                            tint = if (loginViewModel.passwordVisible) colorResource(id = R.color.purple_700) else Color.Gray
                         )
                     }
                 },
                 label = { Text(text = "Password") },
                 placeholder = { Text(text = "Password") },
                 singleLine = true,
-                visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (loginViewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
             Spacer(modifier = Modifier.padding(10.dp))
             Button(
                 onClick = {
-                    userViewModel.loginUserWithEmailAndPassword(
-                        email.value,
-                        password.value
+                    loginViewModel.loginUserWithEmailAndPassword(
+                        loginViewModel.email,
+                        loginViewModel.password
                     ) { success ->
                         if (success) {
                             navController.navigate(Screens.GoogleMap.name)
+                            loginViewModel.resetState()
                         } else {
                             Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                         }

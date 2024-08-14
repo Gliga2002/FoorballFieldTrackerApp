@@ -12,13 +12,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.footballfieldtracker.ui.FootballFieldApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
-import com.example.footballfieldtracker.ui.viewmodels.CurrentUserViewModelFactory
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
+import com.example.footballfieldtracker.ui.viewmodels.LoginViewModelFactory
+import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
+import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModelFactory
+
 
 class MainActivity : ComponentActivity() {
 
-    private val userViewModel: UserViewModel by viewModels {
-        CurrentUserViewModelFactory((application as MainApplication).container.userRepository)
+    private val loginViewModel: LoginViewModel by viewModels {
+        LoginViewModelFactory((application as MainApplication).container.userRepository)
+    }
+
+    private val registerViewModel: RegisterViewModel by viewModels {
+        RegisterViewModelFactory((application as MainApplication).container.userRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FootballFieldApp(userViewModel)
+                    FootballFieldApp(loginViewModel, registerViewModel)
                 }
             }
         }

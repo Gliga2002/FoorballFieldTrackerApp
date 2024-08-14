@@ -25,7 +25,8 @@ import com.example.footballfieldtracker.ui.layout.screens.LoginScreen
 import com.example.footballfieldtracker.ui.layout.screens.MapScreen
 import com.example.footballfieldtracker.ui.layout.screens.RegisterScreen
 import com.example.footballfieldtracker.ui.layout.topappbar.CustomAppBar
-import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
+import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
+import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -39,9 +40,10 @@ enum class Screens {
 // TODO: u zavisnosti od starting screen, ces da pokazes topbar
 @Composable
 fun FootballFieldApp(
-    userViewModel: UserViewModel
+    loginViewModel: LoginViewModel,
+    registerViewModel: RegisterViewModel
 ) {
-    val currentUser by userViewModel.currentUser.collectAsState()
+    val currentUser by loginViewModel.currentUser.collectAsState()
 
     val startDestination = if (currentUser != null) Screens.GoogleMap.name else Screens.Login.name
 
@@ -54,9 +56,7 @@ fun FootballFieldApp(
         drawerState = drawerState,
         gesturesEnabled = false,
         drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier.fillMaxWidth(0.9f) // Set height to 80% of screen height
-            ) {
+            ModalDrawerSheet {
                 DrawerContent(
                     menus = menus,
                     currentUser = currentUser,
@@ -78,7 +78,7 @@ fun FootballFieldApp(
             topBar = {
                 CustomAppBar(
                     drawerState,
-                    userViewModel,
+                    loginViewModel,
                     navController)
             },
             content = { paddingValues ->
@@ -88,10 +88,10 @@ fun FootballFieldApp(
                     Modifier.padding(paddingValues)
                 ) {
                     composable(Screens.Register.name) {
-                        RegisterScreen(navController = navController, userViewModel = userViewModel)
+                        RegisterScreen(navController = navController, registerViewModel = registerViewModel)
                     }
                     composable(Screens.Login.name) {
-                        LoginScreen(navController = navController, userViewModel = userViewModel)
+                        LoginScreen(navController = navController, loginViewModel = loginViewModel)
                     }
                     composable(Screens.GoogleMap.name) {
                         MapScreen(navController = navController)
