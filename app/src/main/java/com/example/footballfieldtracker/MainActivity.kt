@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.footballfieldtracker.ui.FootballApp
 import com.example.footballfieldtracker.ui.FootballFieldApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
@@ -45,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FootballFieldApp(loginViewModel, registerViewModel, userViewModel)
+                    FootballApp(loginViewModel, registerViewModel, userViewModel)
                 }
             }
         }

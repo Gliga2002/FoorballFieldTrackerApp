@@ -5,10 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.data.repository.UserRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
+
+    private val _loading = MutableStateFlow(true)
+    val loading: StateFlow<Boolean> = _loading
 
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
@@ -24,6 +28,7 @@ class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
             userRepository.fetchCurrentUser { user ->
                 if (user != null) {
                     userRepository.updateCurrentUser(user) // Update the current user in the repository
+                    _loading.value = false  // Loading is done
                 }
             }
         }

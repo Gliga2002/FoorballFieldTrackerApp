@@ -135,8 +135,8 @@ class UserRepository(
                     .get()
                     .await()
 
-                userDocument.toObject(User::class.java)
-                cb(null)
+                val user = userDocument.toObject(User::class.java)
+                cb(user)
             } catch (e: Exception) {
                 // Handle exceptions (e.g., log error)
                 cb(null)

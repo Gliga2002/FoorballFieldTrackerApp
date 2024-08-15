@@ -3,6 +3,8 @@ package com.example.footballfieldtracker.ui.layout.topappbar
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -10,7 +12,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,15 +33,16 @@ fun CustomAppBar(
     navController: NavHostController
 ) {
 
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-        ?: Screens.Register.name
     val coroutineScope = rememberCoroutineScope()
 
     val title = when (currentRoute) {
         Screens.GoogleMap.name -> "Google Map"
         Screens.Register.name -> "Register"
         Screens.Login.name -> "Login"
-        else -> "Football Field" // Podrazumevani naslov
+        else -> "Redirecting..." // Podrazumevani naslov
     }
 
     TopAppBar(
@@ -56,16 +63,7 @@ fun CustomAppBar(
             // Prikazuj logout dugme samo ako nismo na Login ili Register ekranu
             if (currentRoute !in listOf(Screens.Login.name, Screens.Register.name)) {
                 IconButton(onClick = {
-                    // Izvrši logout operaciju i navigiraj na Login ekran
-                    loginViewModel.signOut { success ->
-                        if (success) {
-                            navController.navigate(Screens.Login.name) {
-                                popUpTo(Screens.GoogleMap.name) { inclusive = true }
-                            }
-                        } else {
-                            Log.d("Greska", "Greska prilikom sign out")
-                        }
-                    }
+                    showLogoutDialog = true
                 }) {
                     Icon(
                         painter = painterResource(R.drawable.logout_24),
@@ -75,4 +73,46 @@ fun CustomAppBar(
             }
         }
     )
+
+    // Display the AlertDialog when showLogoutDialog is true
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // Handle dismiss
+                showLogoutDialog = false
+            },
+            title = {
+                Text(text = "Confirm Logout")
+            },
+            text = {
+                Text(text = "Are you sure you want to log out?")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    // Perform the logout action
+                    loginViewModel.signOut { success ->
+                        if (success) {
+                            navController.navigate(Screens.Login.name) {
+                                popUpTo(Screens.GoogleMap.name) { inclusive = true }
+                            }
+                        } else {
+                            Log.d("Greska", "Greska prilikom sign out")
+                        }
+                    }
+                    // Close the dialog after action
+                    showLogoutDialog = false
+                }) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    // Close the dialog
+                    showLogoutDialog = false
+                }) {
+                    Text("No")
+                }
+            }
+        )
+    }
 }
