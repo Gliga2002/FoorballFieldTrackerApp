@@ -66,6 +66,7 @@ fun FootballApp(
         FootballFieldApp(
             loginViewModel = loginViewModel,
             registerViewModel = registerViewModel,
+            userViewModel = userViewModel,
             currentUser = currentUser
         )
     }
@@ -78,6 +79,7 @@ fun FootballApp(
 fun FootballFieldApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
+    userViewModel: UserViewModel,
     currentUser: User?
 ) {
     val navController: NavHostController = rememberNavController()
@@ -132,7 +134,7 @@ fun FootballFieldApp(
                         LoginScreen(navController = navController, loginViewModel = loginViewModel)
                     }
                     composable(Screens.GoogleMap.name) {
-                        MapScreen(navController = navController)
+                        MapScreen(navController = navController, userViewModel = userViewModel)
                     }
                 }
             }

@@ -3,6 +3,7 @@ package com.example.footballfieldtracker.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,14 @@ class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     val currentUser: StateFlow<User?> = userRepository.currentUser
+
+    val locationData: StateFlow<LocationData?> = userRepository.locationData
+
+    fun updateLocation(locationData: LocationData) {
+        userRepository.updateLocationData(locationData)
+    }
+
+
 
     init {
         loadCurrentUser()

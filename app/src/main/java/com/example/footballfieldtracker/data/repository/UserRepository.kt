@@ -3,6 +3,7 @@ package com.example.footballfieldtracker.data.repository
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.Screens
 import com.google.firebase.auth.FirebaseAuth
@@ -20,6 +21,13 @@ class UserRepository(
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
+
+    private val _locationData = MutableStateFlow<LocationData?>(null)
+    val locationData: StateFlow<LocationData?> = _locationData
+
+    fun updateLocationData(locationData: LocationData) {
+        _locationData.value = locationData
+    }
 
     fun updateCurrentUser(user: User?) {
         _currentUser.value = user
