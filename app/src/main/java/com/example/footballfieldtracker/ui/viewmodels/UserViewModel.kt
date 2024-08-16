@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.footballfieldtracker.data.model.LocationData
+import com.example.footballfieldtracker.data.model.Location
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.data.repository.UserRepository
 import com.example.locationserviceexample.utils.LocationClient
@@ -24,7 +24,7 @@ class UserViewModel(
     val loading: StateFlow<Boolean> = _loading
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
-    val locationData: StateFlow<LocationData?> = userRepository.locationData
+    val location: StateFlow<Location?> = userRepository.location
 
 
     init {
@@ -54,7 +54,7 @@ class UserViewModel(
                     Log.d("UserViewModel", "Location received: $location")
                     val lat = location.latitude
                     val long = location.longitude
-                    userRepository.updateLocationData(LocationData(lat, long))
+                    userRepository.updateLocationData(Location(lat, long))
                 }
                 .launchIn(viewModelScope)
         }

@@ -2,10 +2,8 @@ package com.example.footballfieldtracker.data.repository
 
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
-import com.example.footballfieldtracker.data.model.LocationData
+import com.example.footballfieldtracker.data.model.Location
 import com.example.footballfieldtracker.data.model.User
-import com.example.footballfieldtracker.ui.Screens
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -21,14 +19,15 @@ class UserRepository(
     private val storage: FirebaseStorage
 ) {
 
+    // Todo: current user i location mogu ti budu data source ali ne mora se bakces
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
-    private val _locationData = MutableStateFlow<LocationData?>(null)
-    val locationData: StateFlow<LocationData?> = _locationData
+    private val _location = MutableStateFlow<Location?>(null)
+    val location: StateFlow<Location?> = _location
 
-    fun updateLocationData(locationData: LocationData) {
-        _locationData.value = locationData
+    fun updateLocationData(location: Location) {
+        _location.value = location
     }
 
     fun updateCurrentUser(user: User?) {

@@ -31,6 +31,7 @@ import com.example.footballfieldtracker.ui.layout.screens.mapscreen.MapScreen
 import com.example.footballfieldtracker.ui.layout.screens.registerscreen.RegisterScreen
 import com.example.footballfieldtracker.ui.layout.topappbar.CustomAppBar
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
+import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -45,11 +46,13 @@ enum class Screens {
     Fields
 }
 
+// TODO: STAVI OVO SVE U JEDAN COMPOSABLE
 @Composable
 fun FootballApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
+    markerViewModel: MarkerViewModel
 ) {
 
     // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
@@ -71,7 +74,8 @@ fun FootballApp(
             loginViewModel = loginViewModel,
             registerViewModel = registerViewModel,
             userViewModel = userViewModel,
-            currentUser = currentUser
+            currentUser = currentUser,
+            markerViewModel = markerViewModel
         )
     }
 
@@ -84,7 +88,8 @@ fun FootballFieldApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
-    currentUser: User?
+    currentUser: User?,
+    markerViewModel: MarkerViewModel
 ) {
     val navController: NavHostController = rememberNavController()
     val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -138,7 +143,7 @@ fun FootballFieldApp(
                         LoginScreen(navController = navController, loginViewModel = loginViewModel)
                     }
                     composable(Screens.GoogleMap.name) {
-                        MapScreen(navController = navController, userViewModel = userViewModel)
+                        MapScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
                     }
 
                     composable(Screens.Leadboard.name) {
@@ -146,7 +151,7 @@ fun FootballFieldApp(
                     }
 
                     composable(Screens.Fields.name) {
-                        FieldsScreen(navController = navController, userViewModel = userViewModel)
+                        FieldsScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
                     }
                 }
             }

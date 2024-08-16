@@ -2,6 +2,7 @@ package com.example.footballfieldtracker.data
 
 import android.content.Context
 import android.util.Log
+import com.example.footballfieldtracker.data.repository.MarkerRepository
 import com.example.footballfieldtracker.data.repository.UserRepository
 import com.example.locationserviceexample.utils.DefaultLocationClient
 import com.example.locationserviceexample.utils.LocationClient
@@ -21,8 +22,14 @@ class DefaultAppContainer(context: Context) {
         UserRepository(auth, firestore, storage)
     }
 
+    val markerRepository: MarkerRepository by lazy {
+        MarkerRepository(auth, firestore, storage)
+    }
+
     // zbog unit testa koristim interfejs
     val locationClient: LocationClient by lazy {
         DefaultLocationClient(context.applicationContext)
     }
+
+
 }

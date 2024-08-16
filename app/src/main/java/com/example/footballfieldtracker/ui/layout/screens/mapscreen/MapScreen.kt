@@ -38,10 +38,12 @@ import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
-import com.example.footballfieldtracker.data.model.LocationData
+import com.example.footballfieldtracker.data.model.Location
+import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.hasLocationPermissions
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -54,9 +56,10 @@ import com.google.maps.android.compose.rememberCameraPositionState
 
 
 @Composable
-fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
+fun MapScreen(navController: NavController, userViewModel: UserViewModel, markerViewModel: MarkerViewModel) {
     // Dobijanje Location Data iz ViewModela
-    val locationData by userViewModel.locationData.collectAsState()
+    val locationData by userViewModel.location.collectAsState()
+    val markers by markerViewModel.markers.collectAsState(emptyList())
 
     var isDialogOpen by remember { mutableStateOf(false) }
     var isServiceRunning by remember { mutableStateOf(false) }
@@ -96,7 +99,7 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
     }
 
     // Definišite poziciju kamere na osnovu locationData
-    val currentPosition = locationData ?: LocationData(43.321445, 21.896104)
+    val currentPosition = locationData ?: Location(43.321445, 21.896104)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             LatLng(
@@ -141,8 +144,19 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
                     state = MarkerState(
                         position = LatLng(it.latitude, it.longitude)
                     ),
-                    title = "You are here"
+                    title = "You are here",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Custom color for user marker
                 )
+
+                // Add markers from ViewModel
+                markers.forEach { marker ->
+                    Marker(
+                        state = MarkerState(
+                            position = LatLng(marker.latitude, marker.longitude)
+                        ),
+                        title = marker.name
+                    )
+                }
             }
         }
 
