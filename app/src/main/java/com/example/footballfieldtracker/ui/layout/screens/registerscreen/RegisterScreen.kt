@@ -1,4 +1,4 @@
-package com.example.footballfieldtracker.ui.layout.screens
+package com.example.footballfieldtracker.ui.layout.screens.registerscreen
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
+import com.example.footballfieldtracker.ui.layout.util.ProfileImage
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 
 // Todo: Validacija inputa (pogledaj CampLife kako izvrsila validaciju) i proveri da li radi

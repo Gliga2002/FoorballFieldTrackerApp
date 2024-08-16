@@ -17,7 +17,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,10 +45,11 @@ import com.example.footballfieldtracker.ui.Screens
 
 data class DrawerMenu(val icon: ImageVector, val title: String, val route: String)
 
+// moras da ih pravis sam
 val menus = arrayOf(
-    DrawerMenu(Icons.Filled.Face, "Google Map", Screens.GoogleMap.name),
-    DrawerMenu(Icons.Filled.Settings, "Register", Screens.Register.name),
-    DrawerMenu(Icons.Filled.Info, "Login", Screens.Login.name)
+    DrawerMenu(Icons.Filled.LocationOn, "Google Map", Screens.GoogleMap.name),
+    DrawerMenu(Icons.Filled.Face, "Leadboard", Screens.Leadboard.name),
+    DrawerMenu(Icons.Filled.PlayArrow, "Fields", Screens.Fields.name)
 )
 
 @Composable

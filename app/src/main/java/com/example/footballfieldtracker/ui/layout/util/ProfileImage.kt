@@ -1,4 +1,4 @@
-package com.example.footballfieldtracker.ui.layout.screens
+package com.example.footballfieldtracker.ui.layout.util
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

@@ -38,8 +38,8 @@ class UserViewModel(
             userRepository.fetchCurrentUser { user ->
                 if (user != null) {
                     userRepository.updateCurrentUser(user) // Update the current user in the repository
-                    _loading.value = false  // Loading is done
                 }
+                _loading.value = false  // Loading is done
             }
         }
 

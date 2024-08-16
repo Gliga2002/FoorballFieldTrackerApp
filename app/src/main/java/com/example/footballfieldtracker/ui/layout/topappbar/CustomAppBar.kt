@@ -42,6 +42,8 @@ fun CustomAppBar(
         Screens.GoogleMap.name -> "Google Map"
         Screens.Register.name -> "Register"
         Screens.Login.name -> "Login"
+        Screens.Leadboard.name -> "Leadboard"
+        Screens.Fields.name -> "Fields"
         else -> "Redirecting..." // Podrazumevani naslov
     }
 

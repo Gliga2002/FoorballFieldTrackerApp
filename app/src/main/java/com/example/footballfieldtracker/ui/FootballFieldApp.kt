@@ -1,7 +1,6 @@
 package com.example.footballfieldtracker.ui
 
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,9 +24,11 @@ import androidx.navigation.compose.rememberNavController
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.layout.drawer.DrawerContent
 import com.example.footballfieldtracker.ui.layout.drawer.menus
-import com.example.footballfieldtracker.ui.layout.screens.LoginScreen
-import com.example.footballfieldtracker.ui.layout.screens.MapScreen
-import com.example.footballfieldtracker.ui.layout.screens.RegisterScreen
+import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldsScreen
+import com.example.footballfieldtracker.ui.layout.screens.leadboardscreen.LeadboardScreen
+import com.example.footballfieldtracker.ui.layout.screens.loginscreen.LoginScreen
+import com.example.footballfieldtracker.ui.layout.screens.mapscreen.MapScreen
+import com.example.footballfieldtracker.ui.layout.screens.registerscreen.RegisterScreen
 import com.example.footballfieldtracker.ui.layout.topappbar.CustomAppBar
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
@@ -39,7 +40,9 @@ import kotlinx.coroutines.launch
 enum class Screens {
     Login,
     Register,
-    GoogleMap
+    GoogleMap,
+    Leadboard,
+    Fields
 }
 
 @Composable
@@ -137,11 +140,23 @@ fun FootballFieldApp(
                     composable(Screens.GoogleMap.name) {
                         MapScreen(navController = navController, userViewModel = userViewModel)
                     }
+
+                    composable(Screens.Leadboard.name) {
+                        LeadboardScreen(navController = navController, userViewModel = userViewModel)
+                    }
+
+                    composable(Screens.Fields.name) {
+                        FieldsScreen(navController = navController, userViewModel = userViewModel)
+                    }
                 }
             }
         )
     }
 }
+
+
+
+
 
 
 

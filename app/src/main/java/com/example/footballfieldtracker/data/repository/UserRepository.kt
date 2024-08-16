@@ -106,6 +106,7 @@ class UserRepository(
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: return callback(false)
 
+            // ovo si mogao sa User class da instanciras, rekli su na firestore https://firebase.google.com/docs/firestore/manage-data/add-data
             val user = mapOf(
                 "id" to userId,
                 "email" to email,
