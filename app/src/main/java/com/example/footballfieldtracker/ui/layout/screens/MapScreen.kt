@@ -25,6 +25,7 @@ import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.DefaultLocationClient
+import com.example.locationserviceexample.utils.hasLocationPermissions
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -52,11 +53,6 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
     // Context za korišćenje u aktivnostima i za request permissions
     val context = LocalContext.current
 
-    // Definišite Location Client i Launcher za Permissions
-    val locationClient = LocationServices.getFusedLocationProviderClient(context)
-    val defaultLocationClient = remember {
-        DefaultLocationClient(context, locationClient)
-    }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -64,8 +60,7 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
             if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true &&
                 permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
 
-                // Start location updates if permissions are granted
-                startLocationUpdates(defaultLocationClient, userViewModel)
+               userViewModel.updateLocation()
             } else {
                 handlePermissionRationale(context, permissions)
 
@@ -77,8 +72,7 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
     LaunchedEffect(Unit) {
         if (hasLocationPermissions(context)) {
 
-            // Start location updates if permissions are granted
-            startLocationUpdates(defaultLocationClient, userViewModel)
+            userViewModel.updateLocation()
 
         } else {
             requestPermissionLauncher.launch(
@@ -128,30 +122,20 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
         properties = properties,
         uiSettings = uiSettings
     ) {
-        Marker(
-            state = MarkerState(
-                position = LatLng(
-                    currentPosition.latitude,
-                    currentPosition.longitude
-                )
+        // Display marker only if locationData is not null
+        locationData?.let {
+            Marker(
+                state = MarkerState(
+                    position = LatLng(it.latitude, it.longitude)
+                ),
+                title="You are here"
             )
-        )
+        }
     }
 }
 
-fun hasLocationPermissions(context: Context): Boolean {
-    return ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-}
 
 // Helper function to handle permission rationale
-
 fun handlePermissionRationale(context: Context, permissions: Map<String, Boolean>) {
     val rationalRequired = ActivityCompat.shouldShowRequestPermissionRationale(
         context as MainActivity,
@@ -175,182 +159,4 @@ fun handlePermissionRationale(context: Context, permissions: Map<String, Boolean
     }
 }
 
-fun startLocationUpdates(
-    locationClient: DefaultLocationClient,
-    userViewModel: UserViewModel
-) {
-    locationClient.getLocationUpdates(1000L)
-        .catch { e -> e.printStackTrace() }
-        .onEach { location ->
-            Log.d("SERVICE", location.toString())
-            val lat = location.latitude
-            val long = location.longitude
-            userViewModel.updateLocation(LocationData(lat, long))
-        }
-        .launchIn(CoroutineScope(Dispatchers.Main)) // Use appropriate coroutine scope
-}
-//@SuppressLint("CoroutineCreationDuringComposition")
-//@Composable
-//fun MapScreen(navController: NavController, userViewModel: UserViewModel) {
-//
-//    val locationData by userViewModel.locationData.collectAsState()
-//
-//
-//
-//
-//
-//    val currentPosition = locationData ?: LocationData(43.321445, 21.896104)
-//    val cameraPositionState = rememberCameraPositionState {
-//        position = CameraPosition.fromLatLngZoom(
-//            LatLng(
-//                currentPosition.latitude,
-//                currentPosition.longitude
-//            ), 100f
-//        )
-//    }
-//
-//    // Move camera to new location when locationData changes
-//    LaunchedEffect(locationData) {
-//        locationData?.let {
-//            cameraPositionState.animate(
-//                CameraUpdateFactory.newLatLngZoom(
-//                    LatLng(
-//                        it.latitude,
-//                        it.longitude
-//                    ), 15f // Adjust zoom level as needed
-//                )
-//            )
-//        }
-//    }
-//    var uiSettings by remember { mutableStateOf(MapUiSettings()) }
-//    var properties by remember {
-//        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
-//    }
-//    GoogleMap(
-//        modifier = Modifier.fillMaxSize(),
-//        cameraPositionState = cameraPositionState,
-//        properties = properties,
-//        uiSettings = uiSettings
-//    ) {
-//        Marker(
-//            state = MarkerState(
-//                position = LatLng(
-//                    currentPosition.latitude,
-//                    currentPosition.longitude
-//                )
-//            ),
-//        )
-//    }
-//    val context = LocalContext.current
-//    val locationClient = LocationServices.getFusedLocationProviderClient(context)
-//    val defaultLocationClient = remember {
-//        DefaultLocationClient(context, locationClient)
-//    }
-//
-//
-//    val requestPermissionLauncher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.RequestMultiplePermissions(),
-//        onResult = { permissions ->
-//            if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true &&
-//                permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-//            ) {
-//
-//                // TODO: zovi fuesed location client
-//                // Permissions granted, start location updates
-//                defaultLocationClient.getLocationUpdates(1000L)
-//                    .catch { e -> e.printStackTrace() }
-//                    .onEach { location ->
-//                        Log.d("SERVICE", location.toString())
-//                        // Use location data, e.g., update UI or ViewModel
-//                        val lat = location.latitude.toString()
-//                        val long = location.longitude.toString()
-//                        // Update ViewModel or handle location data here
-//                        // You can use a SharedFlow or other mechanism to notify the ViewModel
-//                        userViewModel.updateLocation(LocationData(lat.toDouble(), long.toDouble()))
-//                    }
-//                    .launchIn(CoroutineScope(Dispatchers.Main)) // Use appropriate coroutine scope
-//            } else {
-//                // ove dve stvari vracaju boolean, znai razlog da li trebamo poslati permission rational (reason)
-////                The rationale is essentially a message explaining why your app needs a particular permission.
-//                val rationalRequired = ActivityCompat.shouldShowRequestPermissionRationale(
-//                    // ovaj context kaze gde da se pojavi
-//                    context as MainActivity,
-//                    Manifest.permission.ACCESS_FINE_LOCATION
-//                ) || ActivityCompat.shouldShowRequestPermissionRationale(
-//                    context as MainActivity,
-//                    Manifest.permission.ACCESS_COARSE_LOCATION
-//                )
-//                if (rationalRequired) {
-//                    // Ako stavis Ask me every time, prvi put ce ovo da izadje a svaki sledeci put ovo dole
-//                    Toast.makeText(
-//                        context,
-//                        "Location Permission is required for this feature to work",
-//                        Toast.LENGTH_LONG
-//                    )
-//                        .show()
-//                } else {
-//                    // mora rucno sad da namesti, kad ne dopustim second time, ovo ce mi se cesce pojavljivati
-//                    // ako stavim Don't Allow nece da mi se poajvi pop-up, vec ova poruka
-//                    Toast.makeText(
-//                        context,
-//                        "Location Permission is required, please enable it in the Android Settings",
-//                        Toast.LENGTH_LONG
-//                    )
-//                        .show()
-//                }
-//            }
-//        })
-//
-//
-//    // Using LaunchedEffect to handle side effects
-//    LaunchedEffect((ContextCompat.checkSelfPermission(
-//        context,
-//        Manifest.permission.ACCESS_FINE_LOCATION
-//    ) == PackageManager.PERMISSION_GRANTED
-//            &&
-//            ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.ACCESS_COARSE_LOCATION
-//            ) == PackageManager.PERMISSION_GRANTED
-//            )) {
-//        if (ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.ACCESS_FINE_LOCATION
-//            ) == PackageManager.PERMISSION_GRANTED
-//            &&
-//            ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.ACCESS_COARSE_LOCATION
-//            ) == PackageManager.PERMISSION_GRANTED
-//        ) {
-//            defaultLocationClient.getLocationUpdates(1000L)
-//                .catch { e -> e.printStackTrace() }
-//                .onEach { location ->
-//                    Log.d("SERVICE", location.toString())
-//                    // Use location data, e.g., update UI or ViewModel
-//                    val lat = location.latitude.toString()
-//                    val long = location.longitude.toString()
-//                    // Update ViewModel or handle location data here
-//                    // You can use a SharedFlow or other mechanism to notify the ViewModel
-//                    userViewModel.updateLocation(LocationData(lat.toDouble(), long.toDouble()))
-//                }
-//                .launchIn(CoroutineScope(Dispatchers.Main)) // Use appropriate coroutine scope
-//
-//
-//        } else {
-//            requestPermissionLauncher.launch(
-//                arrayOf(
-//                    Manifest.permission.ACCESS_COARSE_LOCATION,
-//                    Manifest.permission.ACCESS_FINE_LOCATION
-//                )
-//            )
-//        }
-//    }
-//
-//
-//
-//
-//
-//
-//}
 

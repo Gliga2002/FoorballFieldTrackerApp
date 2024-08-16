@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 
+// mogao bi i ovde interfejs, jer ces da ga koristis kao DI u viewModel i dobar je za mocking
+
 class UserRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,

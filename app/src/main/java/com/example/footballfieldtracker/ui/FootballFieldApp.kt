@@ -50,6 +50,7 @@ fun FootballApp(
 ) {
 
     // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
+    // Todo: kad imas vreme refaktorisi ovo, neka ga dole sta ce ti ovde
     val currentUser by userViewModel.currentUser.collectAsState()
     val isLoading by userViewModel.loading.collectAsState()
 

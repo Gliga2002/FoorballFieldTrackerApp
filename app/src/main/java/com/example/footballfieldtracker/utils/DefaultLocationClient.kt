@@ -10,20 +10,22 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 
 class DefaultLocationClient(
-    private val context: Context,
-    private val client: FusedLocationProviderClient
+    private val context: Context
 ): LocationClient {
+
+    private val client: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
     @SuppressLint("MissingPermission")
     override fun getLocationUpdates(interval: Long): Flow<Location> {
         return callbackFlow {
-            if(!context.hasLocationPermission()) {
+            if(!hasLocationPermissions(context)) {
                 throw LocationClient.LocationException("Missing location permission")
             }
 

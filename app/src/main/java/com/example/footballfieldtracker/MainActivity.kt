@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.footballfieldtracker.ui.FootballApp
-import com.example.footballfieldtracker.ui.FootballFieldApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModelFactory
@@ -22,6 +21,7 @@ import com.example.footballfieldtracker.ui.viewmodels.UserViewModelFactory
 
 
 class MainActivity : ComponentActivity() {
+    // Todo: greska je bila jer si pristupao container pre nego sto je on bio kreira, a ovim nacinom pristupas tek kada treba, ne radis ti to eksplicitno
 
     private val loginViewModel: LoginViewModel by viewModels {
         LoginViewModelFactory((application as MainApplication).container.userRepository)
@@ -31,13 +31,17 @@ class MainActivity : ComponentActivity() {
         RegisterViewModelFactory((application as MainApplication).container.userRepository)
     }
 
+    // ????
     private val userViewModel: UserViewModel by viewModels {
-        UserViewModelFactory((application as MainApplication).container.userRepository)
+        UserViewModelFactory(
+            userRepository = (application as MainApplication).container.userRepository,
+            locationClient = (application as MainApplication).container.locationClient
+        )
     }
 
+    // stavi sve ovo u jedan objekat
+
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
         super.onCreate(savedInstanceState)
         setContent {
             FootballFieldTrackerTheme {

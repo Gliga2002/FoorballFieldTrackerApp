@@ -7,6 +7,6 @@ class MainApplication : Application() {
     lateinit var container: DefaultAppContainer
     override fun onCreate() {
         super.onCreate()
-        container = DefaultAppContainer()
+        container = DefaultAppContainer(this)
     }
 }
