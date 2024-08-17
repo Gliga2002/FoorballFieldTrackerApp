@@ -2,9 +2,12 @@ package com.example.footballfieldtracker.ui.layout.screens.mapscreen
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +42,7 @@ import androidx.navigation.NavController
 import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.Location
+import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.hasLocationPermissions
@@ -54,18 +58,29 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
-
+// Todo: mora jer hoces startForegroundService, da hoces startService ne bi moralo ali probaj to posle
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MapScreen(navController: NavController, userViewModel: UserViewModel, markerViewModel: MarkerViewModel) {
+fun MapScreen(
+    navController: NavController,
+    userViewModel: UserViewModel,
+    markerViewModel: MarkerViewModel,
+    defaultnearbyfieldcontroller: NearbyFieldsDetectionController
+) {
+
+    // Context za korišćenje u aktivnostima i za request permissions
+    val context = LocalContext.current
+
     // Dobijanje Location Data iz ViewModela
     val locationData by userViewModel.location.collectAsState()
     val markers by markerViewModel.markers.collectAsState(emptyList())
 
     var isDialogOpen by remember { mutableStateOf(false) }
-    var isServiceRunning by remember { mutableStateOf(false) }
 
-    // Context za korišćenje u aktivnostima i za request permissions
-    val context = LocalContext.current
+    // Todo: imam bag da ako izadje i udje opet a servis radi, da mi je ovo default false, na kraju ga resi ako moze ako ne nista, nije strasno nije velika stvar radi lepo
+    var isServiceRunning by remember { mutableStateOf(getServiceRunningState(context)) } // Load state
+
+
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -162,21 +177,24 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel, marker
 
 
         // TODO: ovde je pikazi ali align se budi ne prepoznaje da treba u ovaj scope
-        IconButton(
-            onClick = { isDialogOpen = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(12.dp) // Adjust padding as needed
-                .size(40.dp) // Larger size for the button
-        ) {
-            Icon(
-                painter = if (isServiceRunning) painterResource(id = R.drawable.notifications_active_24) else painterResource(
-                    id = R.drawable.notifications_24
-                ),
-                contentDescription = if (isServiceRunning) "Notifications" else "Notifications Off",
-                tint = MaterialTheme.colorScheme.primary, // Adjust icon color if needed
-                modifier = Modifier.size(32.dp)
-            )
+        // Todo: Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
+        if (locationData != null) {
+            IconButton(
+                onClick = { isDialogOpen = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp) // Adjust padding as needed
+                    .size(40.dp) // Larger size for the button
+            ) {
+                Icon(
+                    painter = if (isServiceRunning) painterResource(id = R.drawable.notifications_active_24) else painterResource(
+                        id = R.drawable.notifications_24
+                    ),
+                    contentDescription = if (isServiceRunning) "Notifications" else "Notifications Off",
+                    tint = MaterialTheme.colorScheme.primary, // Adjust icon color if needed
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
 
 
@@ -203,17 +221,26 @@ fun MapScreen(navController: NavController, userViewModel: UserViewModel, marker
             AlertDialogComponent(
                 isServiceRunning = isServiceRunning,
                 onConfirm = {
+                    Log.d("AlertDialog", "Old isServiceRunning value: $isServiceRunning")
                     isServiceRunning = !isServiceRunning
+                    Log.d("AlertDialog", "New isServiceRunning value: $isServiceRunning")
+                    saveServiceRunningState(context, isServiceRunning) // Save the new state
+                    if (isServiceRunning) {
+                        defaultnearbyfieldcontroller.startNearbyFieldsDetectionService()
+                    } else {
+                        defaultnearbyfieldcontroller.stopNearbyFieldsDetectionService()
+                    }
                 },
                 onDismiss = {
                     isDialogOpen = false
-                }
+                },
             )
         }
     }
 
 }
 
+// Todo: Odvoj ovo u poseban composable
 @Composable
 fun AlertDialogComponent(
     isServiceRunning: Boolean,
@@ -251,6 +278,19 @@ fun AlertDialogComponent(
             }
         }
     )
+}
+
+
+fun saveServiceRunningState(context: Context, isRunning: Boolean) {
+    val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    editor.putBoolean("isServiceRunning", isRunning)
+    editor.apply()
+}
+
+fun getServiceRunningState(context: Context): Boolean {
+    val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+    return sharedPreferences.getBoolean("isServiceRunning", false)
 }
 
 

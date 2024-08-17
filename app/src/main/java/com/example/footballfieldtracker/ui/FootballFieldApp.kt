@@ -1,6 +1,8 @@
 package com.example.footballfieldtracker.ui
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.footballfieldtracker.data.model.User
+import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.layout.drawer.DrawerContent
 import com.example.footballfieldtracker.ui.layout.drawer.menus
 import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldsScreen
@@ -47,12 +50,14 @@ enum class Screens {
 }
 
 // TODO: STAVI OVO SVE U JEDAN COMPOSABLE
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FootballApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
-    markerViewModel: MarkerViewModel
+    markerViewModel: MarkerViewModel,
+    defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
 
     // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
@@ -75,7 +80,8 @@ fun FootballApp(
             registerViewModel = registerViewModel,
             userViewModel = userViewModel,
             currentUser = currentUser,
-            markerViewModel = markerViewModel
+            markerViewModel = markerViewModel,
+            defaultnearbyfieldcontroller = defaultnearbyfieldcontroller
         )
     }
 
@@ -83,13 +89,15 @@ fun FootballApp(
 }
 
 // TODO: u zavisnosti od starting screen, ces da pokazes topbar
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FootballFieldApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
     currentUser: User?,
-    markerViewModel: MarkerViewModel
+    markerViewModel: MarkerViewModel,
+    defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
     val navController: NavHostController = rememberNavController()
     val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -143,7 +151,11 @@ fun FootballFieldApp(
                         LoginScreen(navController = navController, loginViewModel = loginViewModel)
                     }
                     composable(Screens.GoogleMap.name) {
-                        MapScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
+                        MapScreen(
+                            navController = navController,
+                            userViewModel = userViewModel,
+                            markerViewModel = markerViewModel,
+                            defaultnearbyfieldcontroller = defaultnearbyfieldcontroller)
                     }
 
                     composable(Screens.Leadboard.name) {
