@@ -1,17 +1,21 @@
 package com.example.footballfieldtracker.services
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.MainApplication
 import com.example.footballfieldtracker.R
-import com.example.footballfieldtracker.data.model.User
-import com.example.footballfieldtracker.data.repository.UserRepository
+import com.example.footballfieldtracker.data.model.Field
+import com.example.footballfieldtracker.data.model.LocationData
+
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,29 +24,20 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 
 class NearbyFieldsDetection : Service() {
-    // OVO JE NAJVECA GRESKA KOJU SAM IMAO I SA KOJOM SAM SE NAJVISE MUCIO
+    // OVO JE NAJVECA GRESKA KOJU SAM IMAO I SA KOJOM SAM SE NAJVISE MUCIO. Desi se kada zelim pristupati application pre inicjalizacije!!
     // Todo: !!!Kada imas lyfecycle NIKAD NEMOJ NISTA DA INIT PRE LIFYCECLY METODA, STAVLJAJ LATEINIT, ZATO IMAS TE GRESKE, i u servise i u activity. U onCreate to init!!!
 
     private lateinit var app: MainApplication
-    private lateinit var currentUser: StateFlow<User?>
+    private lateinit var currentUserLocation: StateFlow<LocationData?>
     private lateinit var firestore: FirebaseFirestore
+    // temporary soloution
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var notification: NotificationCompat.Builder
 
     // e nemoj odma da pristupas resursima ovako pogledaj ServisiLab isao je sa lateinit pa u on create inicijalizovao
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-//    // Lazy initialization for container
-//    private val appContainer by lazy {
-//        val context = applicationContext
-//        Log.d("NearbyFieldsDetection", "Application context class: ${context::class.java.name}")
-//        (context as? MainApplication)?.container
-//            ?: throw IllegalStateException("Application context is not of type MainApplication")
-//    }
-//
-//    private val userRepo: StateFlow<User?> by lazy {
-//        appContainer.userRepository.currentUser
-//    }
-//    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -51,7 +46,7 @@ class NearbyFieldsDetection : Service() {
     override fun onCreate() {
         super.onCreate()
         app = application as MainApplication
-        currentUser = app.container.userRepository.currentUser
+        currentUserLocation = app.container.userRepository.locationData
         firestore = FirebaseFirestore.getInstance()
         // inicijalizacija, kada se pozove, jednom se izvrsi, jos nije startovan
     }
@@ -71,7 +66,7 @@ class NearbyFieldsDetection : Service() {
         }
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder( this, "location")
+        notification = NotificationCompat.Builder( this, "location")
             .setContentTitle("Searching nearby fields")
             .setContentText("There isn't any field nearby")
             .setSmallIcon(R.drawable.visibility_24)
@@ -87,11 +82,18 @@ class NearbyFieldsDetection : Service() {
             .setContentIntent(pendingIntent) // Set the intent to be fired when notification is clicked
             .setAutoCancel(true) // Remove notification when clicked
 
-        // uzmi notification manager i u ovoj firebase fju ako zadovolji kriterijm ces update notification
 
-        // pozovi firebase fju koja daje live data
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
 
         startForeground(1, notification.build())
+        // Prikazivanje Firebase kolekcije i obrada promjena u realnom vremenu
+        observeMarkers()
+        // Todo: Hocu da pozoves firebase nad kolekcijom markers i da uzivo pratis promene. Zatim hocu da u odnosu na trenutnu lokaciju (currentUser), detektujes da li se nalazi neki marker i radijusu od 10km, ukoliko jeste, izmeni mi notification da kazes da je pronadjen
+
+
+
+
     }
 
     private fun stop() {
@@ -106,9 +108,66 @@ class NearbyFieldsDetection : Service() {
     }
 
 
+    private fun observeMarkers() {
+        // Pretplata na promene u Firebase kolekciji
+        firestore.collection("markers")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w(TAG, "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    val markers = snapshot.documents.mapNotNull { it.toObject(Field::class.java) }
+                    checkProximityToMarkers(markers)
+                }
+            }
+    }
+
+    private fun checkProximityToMarkers(markers: List<Field>) {
+        // Proverite da li je trenutna lokacija unutar radijusa od 10km od nekog markera
+        val userLocation = currentUserLocation.value ?: return
+        markers.forEach { marker ->
+            // Todo: userLocation ti je type LocationData, a marker ima proprty latitude i longitude
+            // Todo: hocu da imas to u vidi kad zoves calculateDistance, izmeni tu funkciju
+            val markerLocation = LocationData(marker.latitude, marker.longitude)
+            val distance = calculateDistance(userLocation, markerLocation)
+            if (distance < 10_000) { // 10km
+                // Ažurirajte notifikaciju
+                updateNotification("Nearby field found: ${marker.name}")
+            }
+        }
+    }
+
+    private fun calculateDistance(location1: LocationData, location2: LocationData): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(location1.latitude, location1.longitude, location2.latitude, location2.longitude, results)
+        return results[0]
+    }
+
+
+    private fun updateNotification(message: String) {
+        // dva side effecta imas, ispravi kad mozes, radi i ovako ali zbog preglednosti
+            notification
+                .setContentText(message)
+                .setSmallIcon(R.drawable.visibility_24)
+                .setStyle(
+                    NotificationCompat.BigPictureStyle()
+                    .bigPicture(BitmapFactory.decodeResource(resources, R.drawable.found))
+                )
+                .setOngoing(true)
+
+        notificationManager.notify(1, notification.build())
+    }
+
+
+
+
+
     companion object {
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
+        private const val TAG = "NearbyFieldsDetection"
     }
 }
 

@@ -41,7 +41,7 @@ import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
-import com.example.footballfieldtracker.data.model.Location
+import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
@@ -72,7 +72,7 @@ fun MapScreen(
     val context = LocalContext.current
 
     // Dobijanje Location Data iz ViewModela
-    val locationData by userViewModel.location.collectAsState()
+    val locationData by userViewModel.locationData.collectAsState()
     val markers by markerViewModel.markers.collectAsState(emptyList())
 
     var isDialogOpen by remember { mutableStateOf(false) }
@@ -114,7 +114,7 @@ fun MapScreen(
     }
 
     // Definišite poziciju kamere na osnovu locationData
-    val currentPosition = locationData ?: Location(43.321445, 21.896104)
+    val currentPosition = locationData ?: LocationData(43.321445, 21.896104)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             LatLng(
