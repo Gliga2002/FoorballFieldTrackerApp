@@ -1,10 +1,13 @@
 package com.example.footballfieldtracker.data.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.ServerTimestamp
 
 data class Field(
+    val id: String = "",
     val name: String = "",
-    val type: String = "",
+        val type: String = "",
     val address: String = "",
     val longitude: Double = 0.0,
     val latitude: Double = 0.0,

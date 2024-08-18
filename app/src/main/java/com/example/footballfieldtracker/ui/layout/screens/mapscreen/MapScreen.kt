@@ -46,6 +46,7 @@ import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.hasLocationPermissions
+import com.example.locationserviceexample.utils.reverseGeocodeLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -71,11 +72,12 @@ fun MapScreen(
     // Context za korišćenje u aktivnostima i za request permissions
     val context = LocalContext.current
 
-    // Dobijanje Location Data iz ViewModela
-    val locationData by userViewModel.locationData.collectAsState()
+    // TODO: svuda da promenis gde si pisao locationData
+    val currentUserLocation by userViewModel.locationData.collectAsState()
     val markers by markerViewModel.markers.collectAsState(emptyList())
 
-    var isDialogOpen by remember { mutableStateOf(false) }
+    var isAddFieldDialogOpen by remember { mutableStateOf(false) }
+    var isServiceDialogOpen by remember { mutableStateOf(false) }
 
     // Todo: imam bag da ako izadje i udje opet a servis radi, da mi je ovo default false, na kraju ga resi ako moze ako ne nista, nije strasno nije velika stvar radi lepo
     var isServiceRunning by remember { mutableStateOf(getServiceRunningState(context)) } // Load state
@@ -114,7 +116,7 @@ fun MapScreen(
     }
 
     // Definišite poziciju kamere na osnovu locationData
-    val currentPosition = locationData ?: LocationData(43.321445, 21.896104)
+    val currentPosition = currentUserLocation ?: LocationData(43.321445, 21.896104)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             LatLng(
@@ -125,16 +127,18 @@ fun MapScreen(
     }
 
     // Move camera to new location when locationData changes
-    LaunchedEffect(locationData) {
-        locationData?.let {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(
-                    LatLng(
-                        it.latitude,
-                        it.longitude
-                    ), 15f // Adjust zoom level as needed
+    LaunchedEffect(currentUserLocation) {
+        currentUserLocation.let {
+            if (it != null) {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(
+                            it.latitude,
+                            it.longitude
+                        ), 15f // Adjust zoom level as needed
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -151,10 +155,16 @@ fun MapScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = properties,
-            uiSettings = uiSettings
+            uiSettings = uiSettings,
+            onMapLongClick = {
+                isAddFieldDialogOpen = true
+                markerViewModel.setLatLng(it)
+                markerViewModel.setNewAddress(reverseGeocodeLocation(context = context,it))
+
+            }
         ) {
             // Add markers or other map features here
-            locationData?.let {
+            currentUserLocation?.let {
                 Marker(
                     state = MarkerState(
                         position = LatLng(it.latitude, it.longitude)
@@ -178,9 +188,9 @@ fun MapScreen(
 
         // TODO: ovde je pikazi ali align se budi ne prepoznaje da treba u ovaj scope
         // Todo: Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
-        if (locationData != null) {
+        if (currentUserLocation != null) {
             IconButton(
-                onClick = { isDialogOpen = true },
+                onClick = { isServiceDialogOpen = true },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(12.dp) // Adjust padding as needed
@@ -217,8 +227,8 @@ fun MapScreen(
             )
         }
 
-        if (isDialogOpen) {
-            AlertDialogComponent(
+        if (isServiceDialogOpen) {
+            ServiceControlDialog(
                 isServiceRunning = isServiceRunning,
                 onConfirm = {
                     Log.d("AlertDialog", "Old isServiceRunning value: $isServiceRunning")
@@ -232,55 +242,30 @@ fun MapScreen(
                     }
                 },
                 onDismiss = {
-                    isDialogOpen = false
+                    isServiceDialogOpen = false
                 },
             )
         }
+
+        if (isAddFieldDialogOpen) {
+            AddFieldDialog(
+                context,
+                markerViewModel,
+                onDismiss = {isAddFieldDialogOpen = false}
+            )
+        }
+
+
+
+
     }
 
 }
 
-// Todo: Odvoj ovo u poseban composable
-@Composable
-fun AlertDialogComponent(
-    isServiceRunning: Boolean,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = "Nearby Fields Detection") },
-        text = {
-            Text(
-                text = """
-                    Are you sure you want to ${if (isServiceRunning) "stop" else "start"} the location tracking service?
-                    ${if (isServiceRunning)
-                        "This action will stop monitoring your location and you will no longer receive notifications about nearby objects."
-                    else
-                        "This will begin monitoring your current location and you'll receive notifications if any objects come within your vicinity."
-                     }   
-                        """.trimIndent(),
-                textAlign = TextAlign.Left
-            )
-        },
-        confirmButton = {
-            Button(onClick = {
-                onConfirm()
-                onDismiss()
-            }) {
-                Text(if (isServiceRunning) "Stop Tracking" else "Start Tracking")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
 
 
+
+// TODO: PROCITAJ O OVOME, I POKUSAJ DA KORISTIS DATA STORE TAKODJE ISTRAZI I PREZENTACIJE
 fun saveServiceRunningState(context: Context, isRunning: Boolean) {
     val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
     val editor = sharedPreferences.edit()

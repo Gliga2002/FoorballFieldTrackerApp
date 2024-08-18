@@ -28,7 +28,7 @@ import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModelFactory
 import com.google.android.gms.location.LocationServices
 
-
+// Todo: za single screen gledaj lab vezbe za poi
 class MainActivity : ComponentActivity() {
     // Iako se Application class kreira pre Activity, ti nisi postovao lyfecyle pristupanja resurima  tokom kreiranj, i izgleda da je tokom kompliacije ili izvrsenja, prvo pokusao da pristupi Application pre nego sto je on uopste kreiran
     // Todo: 1 greska je bila jer si pristupao container pre nego sto je on bio kreira, a ovim nacinom pristupas tek kada treba, ne radis ti to eksplicitno (!!!!pristupio si application container globaly, a trebao si sa lateinit!!!)

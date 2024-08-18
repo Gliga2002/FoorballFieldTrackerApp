@@ -6,6 +6,7 @@ import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +20,16 @@ class UserRepository(
     private val storage: FirebaseStorage
 ) {
 
-    // Todo: current user i location mogu ti budu data source ali ne mora se bakces
+    private var listenerRegistration: ListenerRegistration? = null
+    // current user i location mogu ti budu data source ali ne mora se bakces
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
+    // Dodao
+    private val _allUsers = MutableStateFlow<List<User>>(emptyList())
+    val allUsers: StateFlow<List<User>> = _allUsers
+
+    // Todo: promeni svuda naziv na currentUserLocation
     private val _locationData = MutableStateFlow<LocationData?>(null)
     val locationData: StateFlow<LocationData?> = _locationData
 
@@ -57,18 +64,7 @@ class UserRepository(
                             val userData = document.toObject(User::class.java)
                             userData?.let { currentUser ->
                                 callback(currentUser) // Return the User object
-                                Log.d("UserData", "User ID: ${currentUser.id}")
-                                Log.d("UserData", "Email: ${currentUser.email}")
-                                Log.d("UserData", "Username: ${currentUser.username}")
-                                Log.d("UserData", "First Name: ${currentUser.firstName}")
-                                Log.d("UserData", "Last Name: ${currentUser.lastName}")
-                                Log.d("UserData", "Phone Number: ${currentUser.phoneNumber}")
-                                Log.d("UserData", "Score: ${currentUser.score}")
-                                Log.d("UserData", "Liked Reviews: ${currentUser.likedReviews.joinToString()}")
-                                Log.d("UserData", "Photo Path: ${currentUser.photoPath}")
-                                // Set the current user in the ViewModel
-//                                currentUserViewModel.setCurrentUser(currentUser)
-//                                navController.navigate(Screens.GoogleMap.name)
+
                             }
 
                         } else {
@@ -156,6 +152,31 @@ class UserRepository(
         }
     }
 
+    // Dodao
+    fun fetchAllUsers() {
+        listenerRegistration = firestore.collection("users")
+            .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("UserRepository", "Error fetching users", e)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    // Convert query snapshot to list of users
+                    val users = snapshot.documents.mapNotNull { document ->
+                        document.toObject(User::class.java)
+                    }
+                    // Update StateFlow with the list of users
+                    _allUsers.value = users
+                }
+            }
+    }
+
+    fun stopFetchAllUsers() {
+        listenerRegistration?.remove()
+    }
+
+
     fun signOut(callback: (Boolean) -> Unit) {
         try {
             auth.signOut()
@@ -166,5 +187,7 @@ class UserRepository(
         }
     }
 }
+
+
 
 

@@ -51,19 +51,24 @@ import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 
 @Composable
-fun FieldsScreen(navController: NavHostController,userViewModel: UserViewModel, markerViewModel: MarkerViewModel, modifier: Modifier = Modifier) {
+fun FieldsScreen(
+    navController: NavHostController,
+    markerViewModel: MarkerViewModel, modifier: Modifier = Modifier,
+    username: String) {
     val markers by markerViewModel.markers.collectAsState(emptyList())
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn {
             items(markers) { marker ->
-                FieldCard(field = marker)
+                FieldCard(field = marker, username = username)
             }
         }
 
@@ -93,19 +98,18 @@ fun FieldsScreen(navController: NavHostController,userViewModel: UserViewModel, 
 @Composable
 fun FieldCard(
     field: Field,
+    username: String,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // Pretvorite Timestamp u Date
-    val date: Date = field.timeCreated.toDate()
 
-// Formatirajte Date u željeni format
-    val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault())
-    val formattedDate: String = dateFormat.format(date)
+    val formattedDate = formatDate(field.timeCreated)
+    val formattedAddress = extractAddressPart(field.address)
+
 
 
    Box(
-       modifier = modifier.padding(16.dp)
+       modifier = modifier.padding(12.dp)
    ) {
        Card(
            modifier = modifier.clickable { Log.d("Card", "Clicked") }
@@ -145,15 +149,15 @@ fun FieldCard(
                            modifier = Modifier.padding(top = 8.dp)
                        )
                        Text(
-                           text = field.address,
+
+                           text = formattedAddress,
                            style = MaterialTheme.typography.bodyLarge
                        )
                    }
 
                    Row(
                        modifier = modifier
-                           .fillMaxWidth()
-                           .padding(start = 0.dp, top = 0.dp, end = 20.dp, bottom = 0.dp),
+                           .padding(start = 0.dp, top = 0.dp, end = 24.dp, bottom = 0.dp),
                        horizontalArrangement = Arrangement.Center,
                        verticalAlignment = Alignment.CenterVertically
 
@@ -168,7 +172,7 @@ fun FieldCard(
                        modifier = modifier.padding(8.dp)
                    ) {
                        Text(
-                           text = "by ${field.author}",
+                           text = "by $username",
                            style = MaterialTheme.typography.labelSmall,
                            modifier = Modifier.padding(horizontal = 8.dp)
                        )
@@ -197,3 +201,24 @@ fun FieldCard(
 
    }
 }
+
+fun formatDate(timestamp: Timestamp): String {
+    val date: Date = timestamp.toDate()
+    val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault())
+    return dateFormat.format(date)
+}
+
+fun extractAddressPart(address: String): String {
+    // Podeli adresu na delove koristeći zarez kao separator
+    val parts = address.split(",")
+
+    // Ako postoji više od jednog dela, uzmi sve delove nakon prvog zareza
+    return if (parts.size > 1) {
+        // Spoji sve delove nakon prvog zareza u jedan string i ukloni nepotrebne prazne prostore
+        parts.drop(1).joinToString(",").trim()
+    } else {
+        ""
+    }
+}
+
+

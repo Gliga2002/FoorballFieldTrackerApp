@@ -1,6 +1,10 @@
 package com.example.footballfieldtracker.ui.viewmodels
 
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,61 +13,92 @@ import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.data.model.Review
 import com.example.footballfieldtracker.data.repository.MarkerRepository
 import com.example.footballfieldtracker.data.repository.UserRepository
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewModel() {
 
+
+    var name by mutableStateOf("")
+    var selectedOption by mutableStateOf("Gradska Liga")
+    var imageUri by mutableStateOf<Uri?>(null)
+    var lat: Double by mutableStateOf(0.0)
+        private set
+    var lng: Double by mutableStateOf(0.0)
+        private set
+    // imao sam gresku da sam napravio fju setAddress i private set imaju isti potpis
+   var address: String by mutableStateOf("")
+        private set
+
+
     val markers: StateFlow<List<Field>> = markerRepository.markers
 
-    init {
-        Log.d(
-            "MarkerViewModel",
-            "Izbrsavam se "
-        )
-        // Automatski dodaj dummy podatke prilikom inicijalizacije ViewModel-a
-        viewModelScope.launch {
-            addDummyData()
-        }
+    // TODO: Ovde napravi za current marker
+
+
+
+    fun setLatLng(latLng: LatLng) {
+        lat = latLng.latitude
+        lng = latLng.longitude
     }
 
-    private suspend fun addDummyData() {
-        val dummyData = listOf(
-            Field(
-                name = "Location 1",
-                type = "Type A",
-                address = "123 Example St",
-                longitude = 20.2602128,
-                latitude =  44.6910817,
-                reviews = mutableListOf(),
-                avgRating = 4.5,
-                reviewCount = 1,
-                photo = "https://picsum.photos/id/237/200/300",
-                timeCreated = Timestamp.now(),
-                author = "Author1"
-            ),
-            Field(
-                name = "Location 2",
-                type = "Type B",
-                address = "456 Another St",
-                longitude = 22.6997321,
-                latitude = 53.6010061,
-                reviews = mutableListOf(),
-                avgRating = 3.0,
-                reviewCount = 1,
-                photo = "https://picsum.photos/seed/picsum/200/300",
-                timeCreated = Timestamp.now(),
-                author = "Author2"
-            )
-        )
+    fun setNewAddress(fieldAddress:String) {
+        address = fieldAddress
+    }
 
-        for (data in dummyData) {
-            markerRepository.addLocationData(data)
+    // Funkcija za resetovanje stanja
+    fun resetState() {
+        name = ""
+        selectedOption = "Gradska Liga"
+        address = ""
+        lat = 0.0
+        lng = 0.0
+        imageUri = null
+    }
+
+    fun saveData(
+        callback: (Boolean, String) -> Unit
+    ) {
+        // TODO: Validacija
+        // Proveri da li je naziv prisutan i nije prazan
+        if (!isValidName(name)) {
+            callback(false, "Naziv ne može biti prazan")
+            return
+        }
+
+        // Proveri da li je tip odabran i validan
+        if (!isValidType(selectedOption)) {
+            callback(false, "Tip mora biti izabran")
+            return
+        }
+
+        // Proveri da li je URL slike validan
+        if (!isImageUriValid(imageUri)) {
+            callback(false, "Molimo unesite sliku")
+            return
+        }
+        // Implement logic to save data, for example, to a database or remote server
+        viewModelScope.launch {
+            // Example: Log data to console
+            markerRepository.addLocationData(
+                name = name,
+                type = selectedOption,
+                lat = lat,
+                lng = lng,
+                address = address,
+                photo = imageUri
+
+            )
+            Log.d("FieldValues","Saved - Name: $name, Option: $selectedOption, Image URL: ${imageUri.toString()} Lat: $lat, Lng: $lng, Address: $address")
+            callback(true, "")
         }
     }
 
 }
+
+
 
 class MarkerViewModelFactory(
     private val markerRepository: MarkerRepository
@@ -76,4 +111,17 @@ class MarkerViewModelFactory(
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
+}
+
+private fun isValidName(name: String): Boolean {
+    return name.isNotBlank()
+}
+
+private fun isValidType(type: String): Boolean {
+    val validTypes = listOf("Gradska Liga", "Okruzna Liga", "Zona Zapad", "Zona Istok", "Sprska Liga Istok", "Prva Liga")
+    return validTypes.contains(type)
+}
+
+private fun isImageUriValid(uri: Uri?): Boolean {
+    return uri != null
 }

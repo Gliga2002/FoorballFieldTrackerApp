@@ -1,5 +1,6 @@
 package com.example.footballfieldtracker.services
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -23,15 +24,16 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 
+
 class NearbyFieldsDetection : Service() {
+
     // OVO JE NAJVECA GRESKA KOJU SAM IMAO I SA KOJOM SAM SE NAJVISE MUCIO. Desi se kada zelim pristupati application pre inicjalizacije!!
     // Todo: !!!Kada imas lyfecycle NIKAD NEMOJ NISTA DA INIT PRE LIFYCECLY METODA, STAVLJAJ LATEINIT, ZATO IMAS TE GRESKE, i u servise i u activity. U onCreate to init!!!
 
     private lateinit var app: MainApplication
     private lateinit var currentUserLocation: StateFlow<LocationData?>
     private lateinit var firestore: FirebaseFirestore
-    // temporary soloution
-    private lateinit var notificationManager: NotificationManager
+    // ovo ovde je okej
     private lateinit var notification: NotificationCompat.Builder
 
     // e nemoj odma da pristupas resursima ovako pogledaj ServisiLab isao je sa lateinit pa u on create inicijalizovao
@@ -83,7 +85,7 @@ class NearbyFieldsDetection : Service() {
             .setAutoCancel(true) // Remove notification when clicked
 
 
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
 
 
         startForeground(1, notification.build())
@@ -134,7 +136,10 @@ class NearbyFieldsDetection : Service() {
             val distance = calculateDistance(userLocation, markerLocation)
             if (distance < 10_000) { // 10km
                 // Ažurirajte notifikaciju
-                updateNotification("Nearby field found: ${marker.name}")
+                updateNotification(
+                    "Nearby field found: ${marker.name}",
+                    notification
+                )
             }
         }
     }
@@ -146,7 +151,7 @@ class NearbyFieldsDetection : Service() {
     }
 
 
-    private fun updateNotification(message: String) {
+    private fun updateNotification(message: String, notification: NotificationCompat.Builder) {
         // dva side effecta imas, ispravi kad mozes, radi i ovako ali zbog preglednosti
             notification
                 .setContentText(message)
@@ -157,6 +162,7 @@ class NearbyFieldsDetection : Service() {
                 )
                 .setOngoing(true)
 
+        var notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(1, notification.build())
     }
 

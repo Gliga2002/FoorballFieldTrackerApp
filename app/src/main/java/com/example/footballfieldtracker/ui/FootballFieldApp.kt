@@ -163,7 +163,7 @@ fun FootballFieldApp(
                     }
 
                     composable(Screens.Fields.name) {
-                        FieldsScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
+                        FieldsScreen(navController = navController,  markerViewModel = markerViewModel, username = currentUser!!.username,)
                     }
                 }
             }

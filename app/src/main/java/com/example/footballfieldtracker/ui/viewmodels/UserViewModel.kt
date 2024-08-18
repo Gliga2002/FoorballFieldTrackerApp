@@ -22,13 +22,21 @@ class UserViewModel(
 
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading
+
+    // Dodao
+    val allUsers: StateFlow<List<User>> = userRepository.allUsers
+
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
     val locationData: StateFlow<LocationData?> = userRepository.locationData
 
 
+
+
     init {
         loadCurrentUser()
+        // Dodao
+        loadAllUsers()
     }
 
 
@@ -45,6 +53,13 @@ class UserViewModel(
 
     }
 
+    // Dodao
+    fun loadAllUsers() {
+        viewModelScope.launch {
+           userRepository.fetchAllUsers()
+        }
+    }
+
     fun updateLocation() {
         // TODO: ovde je izvrsi uz potrebne modifikacije
         viewModelScope.launch {
@@ -59,6 +74,14 @@ class UserViewModel(
                 .launchIn(viewModelScope)
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Stop listening when ViewModel is cleared
+        userRepository.stopFetchAllUsers()
+    }
+
+
 
 
 }
