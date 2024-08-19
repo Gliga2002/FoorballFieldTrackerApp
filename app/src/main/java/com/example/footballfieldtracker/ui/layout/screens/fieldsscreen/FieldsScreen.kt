@@ -51,7 +51,12 @@ import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.footballfieldtracker.R
+import com.example.footballfieldtracker.data.model.LocationData
+import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -61,19 +66,39 @@ import java.util.Locale
 @Composable
 fun FieldsScreen(
     navController: NavHostController,
-    markerViewModel: MarkerViewModel, modifier: Modifier = Modifier,
-    username: String) {
+    userViewModel: UserViewModel,
+    markerViewModel: MarkerViewModel, modifier: Modifier = Modifier) {
+
+    val context = LocalContext.current
+
+    // TODO: svuda da promenis gde si pisao locationData
+    val currentUserLocation by userViewModel.locationData.collectAsState()
+
+    var isFilteredDialogOpen by remember { mutableStateOf(false) }
+
+    val filteredMarkers by markerViewModel.filteredMarkers.collectAsState()
     val markers by markerViewModel.markers.collectAsState(emptyList())
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn {
-            items(markers) { marker ->
-                FieldCard(field = marker, username = username)
+            val markersToDisplay =
+                if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
+            items(markersToDisplay) { marker ->
+                FieldCard(field = marker)
             }
         }
 
+        if (isFilteredDialogOpen && currentUserLocation != null) {
+            FilterFieldDialog(
+                context = context,
+                currentUserLocation = currentUserLocation!!,
+                markerViewModel = markerViewModel,
+                onDismiss = { isFilteredDialogOpen = false }
+            )
+        }
+
         Button(
-            onClick = { /* Handle click event */ },
+            onClick = { isFilteredDialogOpen = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
@@ -90,6 +115,27 @@ fun FieldsScreen(
                 tint = Color.White // Adjust icon color if needed
             )
         }
+
+        // Kad sam ovo stavio inzad google map nije htelo da se prikaze a kad sam ovde stavio hoce!!
+        Log.i("MapScreen", filteredMarkers.isNotEmpty().toString())
+        if (filteredMarkers.isNotEmpty()) {
+            Log.i("MapScreen", "Ovde")
+            IconButton(
+                onClick = { markerViewModel.removeFilters() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    // Todo: bljak
+                    .padding(top = 16.dp, bottom =  24.dp, start = 130.dp) // Adjust padding as needed
+                    .size(40.dp) // Larger size for the button
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.search_off_24),
+                    contentDescription = "Remove filters",
+                    tint = MaterialTheme.colorScheme.primary, // Adjust icon color if needed
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
     }
 }
 
@@ -98,7 +144,6 @@ fun FieldsScreen(
 @Composable
 fun FieldCard(
     field: Field,
-    username: String,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -172,7 +217,8 @@ fun FieldCard(
                        modifier = modifier.padding(8.dp)
                    ) {
                        Text(
-                           text = "by $username",
+                           // ovo sam menjao
+                           text = "by ${field.author}",
                            style = MaterialTheme.typography.labelSmall,
                            modifier = Modifier.padding(horizontal = 8.dp)
                        )
@@ -215,7 +261,7 @@ fun extractAddressPart(address: String): String {
     // Ako postoji više od jednog dela, uzmi sve delove nakon prvog zareza
     return if (parts.size > 1) {
         // Spoji sve delove nakon prvog zareza u jedan string i ukloni nepotrebne prazne prostore
-        parts.drop(1).joinToString(",").trim()
+        parts.takeLast(2).joinToString(",").trim()
     } else {
         ""
     }

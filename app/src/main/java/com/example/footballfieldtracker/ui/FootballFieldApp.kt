@@ -163,7 +163,9 @@ fun FootballFieldApp(
                     }
 
                     composable(Screens.Fields.name) {
-                        FieldsScreen(navController = navController,  markerViewModel = markerViewModel, username = currentUser!!.username,)
+                        // ispravi, ne moze username!!!!!
+                        // i ispravi da uzmes zadva dva iz Grad/Drzava
+                        FieldsScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
                     }
                 }
             }

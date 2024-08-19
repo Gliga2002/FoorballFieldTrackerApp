@@ -1,6 +1,8 @@
 package com.example.footballfieldtracker.ui.layout.util
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterFieldDialog(
+    context: Context,
     currentUserLocation: LocationData,
     markerViewModel: MarkerViewModel,
     onDismiss: () -> Unit,
@@ -147,9 +150,15 @@ fun FilterFieldDialog(
             Button(
                 onClick = {
                    Log.i("Filter", "Filtitram...")
-                    markerViewModel.applyFilters(currentUserLocation)
-                    markerViewModel.resetFilter()
-                    onDismiss()
+                    markerViewModel.applyFilters(currentUserLocation) { isFound ->
+                       if (isFound) {
+                           markerViewModel.resetFilter()
+                           onDismiss()
+                       } else {
+                           Toast.makeText(context, "We were unable to find any data for the requested field filter.", Toast.LENGTH_SHORT).show()
+                       }
+                    }
+
                 }
             ) {
                 Text("Filter")

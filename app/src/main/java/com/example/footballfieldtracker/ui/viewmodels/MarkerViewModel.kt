@@ -33,7 +33,7 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
    var address: String by mutableStateOf("")
         private set
 
-
+    val filteredMarkers: StateFlow<List<Field>> = markerRepository.filteredMarkers
     val markers: StateFlow<List<Field>> = markerRepository.markers
 
     // TODO: Ovde napravi za current marker
@@ -109,18 +109,28 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         }
     }
 
-    fun applyFilters(currentUserLocationData: LocationData) {
+    fun applyFilters(currentUserLocationData: LocationData, cb: (Boolean) -> Unit) {
         // Create a formatted string
         val logMessage = """
         Filter Values:
         Name: $filteredName
-        Type: $selectedOption
+        Type: $filteredSelectedOption
         Radius: $filteredRadius km
         Date Range: $dateRange
     """.trimIndent()
 
         // Log the message with tag "Filter"
         Log.i("Filter", logMessage)
+
+        viewModelScope.launch {
+            markerRepository.applyFilters(callback = cb,filteredName, filteredSelectedOption, dateRange, filteredRadius, currentUserLocationData)
+        }
+    }
+
+    fun removeFilters() {
+        viewModelScope.launch {
+            markerRepository.removeFilters()
+        }
     }
 
 }

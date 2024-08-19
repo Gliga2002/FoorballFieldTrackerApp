@@ -75,15 +75,15 @@ fun MapScreen(
 
     // TODO: svuda da promenis gde si pisao locationData
     val currentUserLocation by userViewModel.locationData.collectAsState()
-    val markers by markerViewModel.markers.collectAsState(emptyList())
+
+    val filteredMarkers by markerViewModel.filteredMarkers.collectAsState()
+    val markers by markerViewModel.markers.collectAsState()
 
     var isAddFieldDialogOpen by remember { mutableStateOf(false) }
     var isServiceDialogOpen by remember { mutableStateOf(false) }
     var isFilteredDialogOpen by remember { mutableStateOf(false) }
 
-    // Todo: imam bag da ako izadje i udje opet a servis radi, da mi je ovo default false, na kraju ga resi ako moze ako ne nista, nije strasno nije velika stvar radi lepo
     var isServiceRunning by remember { mutableStateOf(getServiceRunningState(context)) } // Load state
-
 
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
@@ -161,7 +161,7 @@ fun MapScreen(
             onMapLongClick = {
                 isAddFieldDialogOpen = true
                 markerViewModel.setLatLng(it)
-                markerViewModel.setNewAddress(reverseGeocodeLocation(context = context,it))
+                markerViewModel.setNewAddress(reverseGeocodeLocation(context = context, it))
 
             }
         ) {
@@ -175,8 +175,9 @@ fun MapScreen(
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Custom color for user marker
                 )
 
-                // Add markers from ViewModel
-                markers.forEach { marker ->
+                // Add markers based on the filtered list or all markers
+                val markersToDisplay = if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
+                markersToDisplay.forEach { marker ->
                     Marker(
                         state = MarkerState(
                             position = LatLng(marker.latitude, marker.longitude)
@@ -220,13 +221,34 @@ fun MapScreen(
                 defaultElevation = 20.dp
             ),
             shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(10.dp) // No extra padding inside the button
+            contentPadding = PaddingValues(5.dp) // No extra padding inside the button
         ) {
             Icon(
                 imageVector = Icons.Default.Search, // Replace with your desired icon
                 contentDescription = "Filter",
                 tint = Color.White // Adjust icon color if needed
             )
+        }
+
+        // Kad sam ovo stavio inzad google map nije htelo da se prikaze a kad sam ovde stavio hoce!!
+        Log.i("MapScreen", filteredMarkers.isNotEmpty().toString())
+        if (filteredMarkers.isNotEmpty()) {
+            Log.i("MapScreen", "Ovde")
+            IconButton(
+                onClick = { markerViewModel.removeFilters() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    // Todo: bljak
+                    .padding(top = 16.dp, bottom =  24.dp, start = 130.dp) // Adjust padding as needed
+                    .size(40.dp) // Larger size for the button
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.search_off_24),
+                    contentDescription = "Remove filters",
+                    tint = MaterialTheme.colorScheme.primary, // Adjust icon color if needed
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
 
         if (isServiceDialogOpen) {
@@ -253,26 +275,23 @@ fun MapScreen(
             AddFieldDialog(
                 context,
                 markerViewModel,
-                onDismiss = {isAddFieldDialogOpen = false}
+                onDismiss = { isAddFieldDialogOpen = false }
             )
         }
 
         if (isFilteredDialogOpen && currentUserLocation != null) {
             FilterFieldDialog(
+                context = context,
                 currentUserLocation = currentUserLocation!!,
                 markerViewModel = markerViewModel,
-                onDismiss = {isFilteredDialogOpen = false}
+                onDismiss = { isFilteredDialogOpen = false }
             )
         }
-
-
 
 
     }
 
 }
-
-
 
 
 // TODO: PROCITAJ O OVOME, I POKUSAJ DA KORISTIS DATA STORE TAKODJE ISTRAZI I PREZENTACIJE
