@@ -43,6 +43,7 @@ import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
+import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.hasLocationPermissions
@@ -78,6 +79,7 @@ fun MapScreen(
 
     var isAddFieldDialogOpen by remember { mutableStateOf(false) }
     var isServiceDialogOpen by remember { mutableStateOf(false) }
+    var isFilteredDialogOpen by remember { mutableStateOf(false) }
 
     // Todo: imam bag da ako izadje i udje opet a servis radi, da mi je ovo default false, na kraju ga resi ako moze ako ne nista, nije strasno nije velika stvar radi lepo
     var isServiceRunning by remember { mutableStateOf(getServiceRunningState(context)) } // Load state
@@ -209,7 +211,7 @@ fun MapScreen(
 
 
         Button(
-            onClick = { /* Handle click event */ },
+            onClick = { isFilteredDialogOpen = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
@@ -252,6 +254,14 @@ fun MapScreen(
                 context,
                 markerViewModel,
                 onDismiss = {isAddFieldDialogOpen = false}
+            )
+        }
+
+        if (isFilteredDialogOpen && currentUserLocation != null) {
+            FilterFieldDialog(
+                currentUserLocation = currentUserLocation!!,
+                markerViewModel = markerViewModel,
+                onDismiss = {isFilteredDialogOpen = false}
             )
         }
 

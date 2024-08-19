@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.footballfieldtracker.data.model.Field
+import com.example.footballfieldtracker.data.model.LocationData
 
 import com.example.footballfieldtracker.data.model.Review
 import com.example.footballfieldtracker.data.repository.MarkerRepository
@@ -37,16 +38,10 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
 
     // TODO: Ovde napravi za current marker
 
-
-
-    fun setLatLng(latLng: LatLng) {
-        lat = latLng.latitude
-        lng = latLng.longitude
-    }
-
-    fun setNewAddress(fieldAddress:String) {
-        address = fieldAddress
-    }
+    var filteredName by mutableStateOf("")
+    var filteredSelectedOption by mutableStateOf("Any Type")
+    var filteredRadius by mutableStateOf(0)
+    var dateRange by mutableStateOf("")
 
     // Funkcija za resetovanje stanja
     fun resetState() {
@@ -57,6 +52,24 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         lng = 0.0
         imageUri = null
     }
+
+    fun resetFilter() {
+        filteredName = ""
+        filteredSelectedOption = "Any Type"
+        filteredRadius = 0
+        dateRange = ""
+    }
+
+    fun setLatLng(latLng: LatLng) {
+        lat = latLng.latitude
+        lng = latLng.longitude
+    }
+
+    fun setNewAddress(fieldAddress:String) {
+        address = fieldAddress
+    }
+
+
 
     fun saveData(
         callback: (Boolean, String) -> Unit
@@ -94,6 +107,20 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
             Log.d("FieldValues","Saved - Name: $name, Option: $selectedOption, Image URL: ${imageUri.toString()} Lat: $lat, Lng: $lng, Address: $address")
             callback(true, "")
         }
+    }
+
+    fun applyFilters(currentUserLocationData: LocationData) {
+        // Create a formatted string
+        val logMessage = """
+        Filter Values:
+        Name: $filteredName
+        Type: $selectedOption
+        Radius: $filteredRadius km
+        Date Range: $dateRange
+    """.trimIndent()
+
+        // Log the message with tag "Filter"
+        Log.i("Filter", logMessage)
     }
 
 }

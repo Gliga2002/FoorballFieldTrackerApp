@@ -32,6 +32,7 @@ import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 @Composable
 fun AddFieldDialog(
     context: Context,
+    // Todo: promeni ime
     mapViewModel: MarkerViewModel,
     onDismiss: () -> Unit
 ) {
