@@ -43,7 +43,9 @@ import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
+import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.locationserviceexample.utils.hasLocationPermissions
@@ -67,6 +69,7 @@ fun MapScreen(
     navController: NavController,
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
+    fieldViewModel: FieldViewModel,
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
 
@@ -182,7 +185,12 @@ fun MapScreen(
                         state = MarkerState(
                             position = LatLng(marker.latitude, marker.longitude)
                         ),
-                        title = marker.name
+                        title = marker.name,
+                        onClick = {
+                           fieldViewModel.setCurrentFieldState(marker)
+                            navController.navigate(Screens.Field.name)
+                            true // Indicate that the click event was handled
+                        }
                     )
                 }
             }

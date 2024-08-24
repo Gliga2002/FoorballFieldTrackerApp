@@ -2,6 +2,7 @@ package com.example.footballfieldtracker.ui
 
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,12 +28,14 @@ import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.layout.drawer.DrawerContent
 import com.example.footballfieldtracker.ui.layout.drawer.menus
+import com.example.footballfieldtracker.ui.layout.screens.fieldcreen.FieldScreen
 import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldsScreen
 import com.example.footballfieldtracker.ui.layout.screens.leadboardscreen.LeadboardScreen
 import com.example.footballfieldtracker.ui.layout.screens.loginscreen.LoginScreen
 import com.example.footballfieldtracker.ui.layout.screens.mapscreen.MapScreen
 import com.example.footballfieldtracker.ui.layout.screens.registerscreen.RegisterScreen
 import com.example.footballfieldtracker.ui.layout.topappbar.CustomAppBar
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
@@ -46,7 +49,8 @@ enum class Screens {
     Register,
     GoogleMap,
     Leadboard,
-    Fields
+    Fields,
+    Field
 }
 
 // TODO: STAVI OVO SVE U JEDAN COMPOSABLE
@@ -57,6 +61,7 @@ fun FootballApp(
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
+    fieldViewModel: FieldViewModel,
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
 
@@ -81,6 +86,7 @@ fun FootballApp(
             userViewModel = userViewModel,
             currentUser = currentUser,
             markerViewModel = markerViewModel,
+            fieldViewModel = fieldViewModel,
             defaultnearbyfieldcontroller = defaultnearbyfieldcontroller
         )
     }
@@ -97,6 +103,7 @@ fun FootballFieldApp(
     userViewModel: UserViewModel,
     currentUser: User?,
     markerViewModel: MarkerViewModel,
+    fieldViewModel: FieldViewModel,
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
     val navController: NavHostController = rememberNavController()
@@ -132,6 +139,7 @@ fun FootballFieldApp(
                 CustomAppBar(
                     drawerState,
                     loginViewModel,
+                    fieldViewModel,
                     navController
                 )
             },
@@ -155,6 +163,7 @@ fun FootballFieldApp(
                             navController = navController,
                             userViewModel = userViewModel,
                             markerViewModel = markerViewModel,
+                            fieldViewModel = fieldViewModel,
                             defaultnearbyfieldcontroller = defaultnearbyfieldcontroller)
                     }
 
@@ -165,7 +174,19 @@ fun FootballFieldApp(
                     composable(Screens.Fields.name) {
                         // ispravi, ne moze username!!!!!
                         // i ispravi da uzmes zadva dva iz Grad/Drzava
-                        FieldsScreen(navController = navController, userViewModel = userViewModel, markerViewModel = markerViewModel)
+                        FieldsScreen(
+                            navController = navController,
+                            userViewModel = userViewModel,
+                            markerViewModel = markerViewModel,
+                            fieldViewModel = fieldViewModel)
+                    }
+
+                    composable(Screens.Field.name) {
+                        FieldScreen(
+                            navController = navController,
+                            userViewModel = userViewModel,
+                            fieldViewModel = fieldViewModel
+                        )
                     }
                 }
             }

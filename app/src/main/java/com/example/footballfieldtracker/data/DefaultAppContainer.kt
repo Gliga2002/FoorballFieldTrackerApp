@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import com.example.footballfieldtracker.data.repository.FieldRepository
 import com.example.footballfieldtracker.data.repository.MarkerRepository
 import com.example.footballfieldtracker.data.repository.UserRepository
 import com.example.locationserviceexample.utils.DefaultLocationClient
@@ -49,6 +50,10 @@ class DefaultAppContainer(context: Context) {
 
     val markerRepository: MarkerRepository by lazy {
         MarkerRepository(auth, firestore, storage)
+    }
+
+    val fieldRepository: FieldRepository by lazy {
+        FieldRepository(auth, firestore)
     }
 
     // zbog unit testa koristim interfejs

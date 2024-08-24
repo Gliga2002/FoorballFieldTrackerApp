@@ -18,6 +18,8 @@ import com.example.footballfieldtracker.services.NearbyFieldsDetection
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.FootballApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModelFactory
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModelFactory
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
@@ -45,6 +47,14 @@ class MainActivity : ComponentActivity() {
     // Todo: 1 nastavak Lazy Initialization: Ako koristite by viewModels() delegat, ViewModel se inicijalizuje automatski kada je potreban. Ako se ViewModel ne koristi, možda se neće inicijalizovati.
     private val markerViewModel: MarkerViewModel by viewModels {
         MarkerViewModelFactory((application as MainApplication).container.markerRepository)
+    }
+
+    private val fieldViewModel: FieldViewModel by viewModels {
+        FieldViewModelFactory(
+            // markerRepository mi ne treba to izbrisi
+            markerRepository = (application as MainApplication).container.markerRepository,
+            fieldRepository = (application as MainApplication).container.fieldRepository
+        )
     }
 
 
@@ -93,6 +103,7 @@ class MainActivity : ComponentActivity() {
                         registerViewModel,
                         userViewModel,
                         markerViewModel,
+                        fieldViewModel,
                         defaultnearbyfieldscontroller)
                 }
             }

@@ -56,7 +56,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.LocationData
+import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -67,7 +69,9 @@ import java.util.Locale
 fun FieldsScreen(
     navController: NavHostController,
     userViewModel: UserViewModel,
-    markerViewModel: MarkerViewModel, modifier: Modifier = Modifier) {
+    markerViewModel: MarkerViewModel,
+    fieldViewModel: FieldViewModel,
+    modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
 
@@ -84,7 +88,7 @@ fun FieldsScreen(
             val markersToDisplay =
                 if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
             items(markersToDisplay) { marker ->
-                FieldCard(field = marker)
+                FieldCard(field = marker, navController = navController, fieldViewModel = fieldViewModel)
             }
         }
 
@@ -144,6 +148,8 @@ fun FieldsScreen(
 @Composable
 fun FieldCard(
     field: Field,
+    navController: NavHostController,
+    fieldViewModel: FieldViewModel,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -157,7 +163,10 @@ fun FieldCard(
        modifier = modifier.padding(12.dp)
    ) {
        Card(
-           modifier = modifier.clickable { Log.d("Card", "Clicked") }
+           modifier = modifier.clickable {
+               fieldViewModel.setCurrentFieldState(field)
+               navController.navigate(Screens.Field.name)
+           }
        ) {
            Column(
                modifier = Modifier

@@ -10,6 +10,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 
 // mogao bi i ovde interfejs, jer ces da ga koristis kao DI u viewModel i dobar je za mocking
@@ -22,6 +23,8 @@ class UserRepository(
 
     private var listenerRegistration: ListenerRegistration? = null
     // current user i location mogu ti budu data source ali ne mora se bakces
+
+
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
@@ -177,9 +180,46 @@ class UserRepository(
     }
 
 
+
+
+
+    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
+    //-------------------------------------------------------------------------------
+
+    private val _userData = MutableStateFlow<User?>(null)
+    val userData: StateFlow<User?> get() = _userData.asStateFlow()
+
+    private var userListenerRegistration: ListenerRegistration? = null
+
+    fun startObservingUser() {
+        val userId = auth.currentUser?.uid ?: return
+        val userDocRef = firestore.collection("users").document(userId)
+
+        userListenerRegistration = userDocRef.addSnapshotListener { snapshot, exception ->
+            if (exception != null) {
+                Log.e("UserRepository", "Error fetching user data", exception)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                val user = snapshot.toObject(User::class.java)
+                _userData.value = user
+                Log.i("UserRepository", "User data updated: $user")
+            } else {
+                _userData.value = null
+            }
+        }
+    }
+
+    fun stopObservingUser() {
+        userListenerRegistration?.remove()
+    }
+    //-------------------------------------------------------------------------------
+
     fun signOut(callback: (Boolean) -> Unit) {
         try {
             auth.signOut()
+            startObservingUser()
             callback(true)
         } catch (e: Exception) {
             // Log error or handle failure
@@ -187,6 +227,7 @@ class UserRepository(
         }
     }
 }
+
 
 
 

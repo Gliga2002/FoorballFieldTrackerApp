@@ -2,6 +2,8 @@ package com.example.footballfieldtracker.ui.layout.topappbar
 
 import android.util.Log
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -22,6 +24,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
+import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 import kotlinx.coroutines.launch
 
@@ -30,6 +33,7 @@ import kotlinx.coroutines.launch
 fun CustomAppBar(
     drawerState: DrawerState,
     loginViewModel: LoginViewModel,
+    fieldViewModel: FieldViewModel,
     navController: NavHostController
 ) {
 
@@ -44,12 +48,14 @@ fun CustomAppBar(
         Screens.Login.name -> "Login"
         Screens.Leadboard.name -> "Leadboard"
         Screens.Fields.name -> "Fields"
+        Screens.Field.name -> fieldViewModel.selectedFieldState.name
         else -> "Redirecting..." // Podrazumevani naslov
     }
 
     TopAppBar(
+        // ako imas vreme smisli bolje. bolje pitaj ako
         navigationIcon = {
-            if (currentRoute !in listOf(Screens.Login.name, Screens.Register.name)) {
+            if (currentRoute in listOf(Screens.GoogleMap.name, Screens.Leadboard.name, Screens.Fields.name)) {
                 IconButton(onClick = {
                     // Otvori drawer kada klikneš na ikonu
                     coroutineScope.launch {
@@ -57,6 +63,12 @@ fun CustomAppBar(
                     }
                 }) {
                     Icon(Icons.Filled.Menu, contentDescription = null)
+                }
+            } else if (currentRoute in listOf(Screens.Field.name)) {
+                IconButton(onClick = {
+                    navController.popBackStack()
+                }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                 }
             }
         },

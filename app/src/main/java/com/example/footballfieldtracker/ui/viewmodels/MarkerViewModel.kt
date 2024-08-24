@@ -36,8 +36,6 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
     val filteredMarkers: StateFlow<List<Field>> = markerRepository.filteredMarkers
     val markers: StateFlow<List<Field>> = markerRepository.markers
 
-    // TODO: Ovde napravi za current marker
-
     var filteredName by mutableStateOf("")
     var filteredSelectedOption by mutableStateOf("Any Type")
     var filteredRadius by mutableStateOf(0)

@@ -39,6 +39,8 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
             userRepository.loginWithEmailAndPassword(email, password) { user ->
                 if (user != null) {
                     userRepository.updateCurrentUser(user) // Update the current user in the repository
+                    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
+                    userRepository.startObservingUser()
                     callback(true) // Success
                 } else {
                     callback(false) // Failure

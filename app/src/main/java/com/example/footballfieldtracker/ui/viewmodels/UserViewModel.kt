@@ -28,6 +28,9 @@ class UserViewModel(
 
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
+    // ovo je pravi currentUser
+    val userData: StateFlow<User?> = userRepository.userData
+
     val locationData: StateFlow<LocationData?> = userRepository.locationData
 
 
@@ -46,6 +49,8 @@ class UserViewModel(
             userRepository.fetchCurrentUser { user ->
                 if (user != null) {
                     userRepository.updateCurrentUser(user) // Update the current user in the repository
+                    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
+                    userRepository.startObservingUser()
                 }
                 _loading.value = false  // Loading is done
             }
