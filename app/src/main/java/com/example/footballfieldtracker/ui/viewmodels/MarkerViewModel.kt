@@ -33,8 +33,9 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
    var address: String by mutableStateOf("")
         private set
 
-    val filteredMarkers: StateFlow<List<Field>> = markerRepository.filteredMarkers
+
     val markers: StateFlow<List<Field>> = markerRepository.markers
+    val filteredMarkers: StateFlow<List<Field>> = markerRepository.filteredMarkers
 
     var filteredName by mutableStateOf("")
     var filteredSelectedOption by mutableStateOf("Any Type")
@@ -72,7 +73,7 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
     fun saveData(
         callback: (Boolean, String) -> Unit
     ) {
-        // TODO: Validacija
+        // Validacija
         // Proveri da li je naziv prisutan i nije prazan
         if (!isValidName(name)) {
             callback(false, "Naziv ne može biti prazan")
@@ -102,23 +103,11 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
                 photo = imageUri
 
             )
-            Log.d("FieldValues","Saved - Name: $name, Option: $selectedOption, Image URL: ${imageUri.toString()} Lat: $lat, Lng: $lng, Address: $address")
-            callback(true, "")
+            callback(true, "Successfully added marker")
         }
     }
 
     fun applyFilters(currentUserLocationData: LocationData, cb: (Boolean) -> Unit) {
-        // Create a formatted string
-        val logMessage = """
-        Filter Values:
-        Name: $filteredName
-        Type: $filteredSelectedOption
-        Radius: $filteredRadius km
-        Date Range: $dateRange
-    """.trimIndent()
-
-        // Log the message with tag "Filter"
-        Log.i("Filter", logMessage)
 
         viewModelScope.launch {
             markerRepository.applyFilters(callback = cb,filteredName, filteredSelectedOption, dateRange, filteredRadius, currentUserLocationData)
@@ -129,6 +118,11 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         viewModelScope.launch {
             markerRepository.removeFilters()
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        markerRepository.removeMarkersListener()
     }
 
 }

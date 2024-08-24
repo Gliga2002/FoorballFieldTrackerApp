@@ -49,11 +49,14 @@ class FieldRepository(
             }
     }
 
+    fun stopListening() {
+        snapshotListenerRegistration?.remove()
+    }
 
-    suspend fun hasUserReviewed(fieldId: String): Boolean {
-        // Pretpostavljam da već imaš funkciju getUser koja vraća korisnika na osnovu UID-a
+
+    suspend fun hasUserReviewed(): Boolean {
         val user = getUser(auth.currentUser!!.uid)
-        val username = user?.username ?: return false // Ako nema korisnika, vrati false odmah
+        val username = user?.username ?: return false
 
         return try {
             val reviews = _selectedField.value?.reviews
@@ -67,7 +70,6 @@ class FieldRepository(
 
             return false
         } catch (e: Exception) {
-            // Obradi greške
             false
         }
     }
@@ -87,8 +89,6 @@ class FieldRepository(
             )
         }
 
-        Log.i("AddReview", "Created new review: $newReview")
-
         try {
 
             // Dodajte recenziju u niz reviews u dokumentu fieldId
@@ -96,92 +96,76 @@ class FieldRepository(
                 .document(fieldId)
                 .update("reviews", FieldValue.arrayUnion(newReview))
                 .await()
-            Log.i(
-                "AddReview",
-                "Successfully added review to 'reviews' array in document with ID: $fieldId"
-            )
 
             // Ažurirajte score korisnika
-            addToAuthorScore(5)
+            changeAuthorScore(5, true)
 
             // Ažurirajte reviewCount i avgRating u dokumentu fieldId
             // TODO: NISI KORISTION SUSPEND FUNCTION VEC ONO ADDONSUCCESS
-            updateFieldStats()
+            updateFieldStats(
+                reviewCount = selectedField.value!!.reviews.size,
+                reviews = _selectedField.value!!.reviews
+            )
 
-            true
         } catch (e: Exception) {
-            // Obrada grešaka
-            false
+
         }
     }
 
 
-    private fun updateFieldStats() {
+    private suspend fun updateFieldStats(reviewCount: Int, reviews: MutableList<Review>) {
         try {
-            // Todo: formatiraj
             val symbols = DecimalFormatSymbols(Locale.US)
             val decimalFormat = DecimalFormat("#.00", symbols)
-            val formattedAvgRating = decimalFormat.format(calculateAvgRating()).toDouble()
-            Log.i("Debaging", "formatedavgrating ${formattedAvgRating}")
-
-
-            Log.i("Debaging", "SelectedField ${_selectedField.value}")
-
-            Log.i("Debaging", "Formatiran rejting $formattedAvgRating")
-
-            val reviewCount = _selectedField.value!!.reviews.size
-
-            Log.i("Debaging", "Formatiran count $reviewCount")
+            val formattedAvgRating =
+                decimalFormat.format(calculateAvgRating(reviews = reviews)).toDouble()
 
 
 
             updateAvgRatingAndSizeInFirestore(formattedAvgRating, reviewCount)
         } catch (e: Exception) {
             // Obrada grešaka
-            Log.i("Debaging", e.toString())
         }
     }
 
     // Function to calculate the average rating of the location
-    private fun calculateAvgRating(): Double {
-        val reviews = _selectedField.value?.reviews
-        Log.i("Debaging", "reviews $reviews")
-        if (reviews != null) {
-            if (reviews.isEmpty()) {
-                Log.i("Debaging", "Greska")
-                return 0.0
-            }
-        }
-        var totalRating = 0.0
-        if (reviews != null) {
+    private fun calculateAvgRating(reviews: MutableList<Review>): Double {
+        return if (reviews.isEmpty()) {
+            0.0
+        } else {
+            var totalRating = 0.0
             for (review in reviews) {
                 totalRating += review.rating
             }
+
+            totalRating / reviews.size
+
         }
 
-        Log.i("Debaging", "ovo vracam iz calculate Avg ${totalRating / reviews!!.size}")
-        return totalRating / reviews!!.size
     }
 
+
     // Function to update the average rating in Firestore
-    private fun updateAvgRatingAndSizeInFirestore(formattedAvgRating: Double, reviewCount: Int) {
-        Log.i("Debaging", "zadnja provera ${_selectedField.value!!.id}")
+    private suspend fun updateAvgRatingAndSizeInFirestore(
+        formattedAvgRating: Double,
+        reviewCount: Int
+    ) {
         if (_selectedField.value?.id?.isNotEmpty() == true) {
-            Log.i("Debaging", "tu sam")
             val db = FirebaseFirestore.getInstance()
             val collectionRef = db.collection("markers")
             val documentRef = collectionRef.document(_selectedField.value!!.id)
 
-            val data = hashMapOf("avgRating" to formattedAvgRating, "reviewCount" to reviewCount)
+            val data =
+                hashMapOf("avgRating" to formattedAvgRating, "reviewCount" to reviewCount)
 
-            documentRef
-                .set(data, SetOptions.merge())
-                .addOnSuccessListener {
-                    Log.d("Update Avg Rating", "AvgRating updated successfully")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Update Avg Rating", "Error updating avgRating: ${e.message}")
-                }
+            try {
+                documentRef
+                    .set(data, SetOptions.merge())
+                    .await()
+
+            } catch (e: Exception) {
+                // Obrada grešaka
+            }
         } else {
             Log.e("Update Avg Rating", "Invalid currentLocation.id")
         }
@@ -197,7 +181,7 @@ class FieldRepository(
 
             updateUserLikedReviews(currUserId, isLiked, review.id)
 
-            addToAuthorScore(5)
+            changeAuthorScore(5, true)
 
         } else {
 
@@ -205,7 +189,7 @@ class FieldRepository(
 
             updateUserLikedReviews(currUserId, isLiked, review.id)
 
-            subtractToAuthorScore(5)
+            changeAuthorScore(5, false)
         }
     }
 
@@ -231,7 +215,8 @@ class FieldRepository(
             val documentSnapshot = markerRef.get().await()
             if (documentSnapshot.exists()) {
                 // Retrieve the 'reviews' field as a list of maps
-                val reviewsList = documentSnapshot.get("reviews") as? List<Map<String, Any>> ?: emptyList()
+                val reviewsList =
+                    documentSnapshot.get("reviews") as? List<Map<String, Any>> ?: emptyList()
 
                 // Convert each map to a Review object
                 val reviewList = reviewsList.mapNotNull { map ->
@@ -275,7 +260,11 @@ class FieldRepository(
 
     }
 
-    private suspend fun updateUserLikedReviews(userId: String, isLiked: Boolean, reviewId: String) {
+    private suspend fun updateUserLikedReviews(
+        userId: String,
+        isLiked: Boolean,
+        reviewId: String
+    ) {
         val db = Firebase.firestore
         val userRef = db.collection("users").document(userId)
         userRef.update(
@@ -286,55 +275,34 @@ class FieldRepository(
 
 
     // refaktorisi
-    suspend fun addToAuthorScore(scoreValue: Int) {
+    suspend fun changeAuthorScore(scoreValue: Int, increase: Boolean) {
 
         val user = getUser(auth.currentUser!!.uid)
 
-        val db = Firebase.firestore
-        val usersCollectionRef = db.collection("users")
-
-        // Query the Users collection to find the user with the matching username
         if (user != null) {
-            usersCollectionRef.whereEqualTo("username", user.username)
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    for (documentSnapshot in querySnapshot) {
-                        val userRef = usersCollectionRef.document(documentSnapshot.id)
-                        userRef.get().addOnSuccessListener { innerDocumentSnapshot ->
-                            if (innerDocumentSnapshot.exists()) {
-                                var existingScore = innerDocumentSnapshot.getLong("score") ?: 0
-                                var newScore = existingScore + scoreValue
-                                userRef.update("score", newScore)
-                            }
-                        }
+            val db = FirebaseFirestore.getInstance()
+            val usersCollectionRef = db.collection("users")
+
+            try {
+                // Pretražuje kolekciju Users za korisnika sa odgovarajućim korisničkim imenom
+                val querySnapshot = usersCollectionRef.whereEqualTo("username", user.username).get().await()
+
+                for (documentSnapshot in querySnapshot) {
+                    val userRef = usersCollectionRef.document(documentSnapshot.id)
+                    val innerDocumentSnapshot = userRef.get().await()
+
+                    if (innerDocumentSnapshot.exists()) {
+                        var existingScore = innerDocumentSnapshot.getLong("score") ?: 0
+                        val newScore = if (increase) existingScore + scoreValue else existingScore - scoreValue
+
+                        // Ažurira score u Firestore
+                        userRef.update("score", newScore).await()
                     }
                 }
-        }
-    }
-
-    suspend fun subtractToAuthorScore(scoreValue: Int) {
-
-        val user = getUser(auth.currentUser!!.uid)
-
-        val db = Firebase.firestore
-        val usersCollectionRef = db.collection("users")
-
-        // Query the Users collection to find the user with the matching username
-        if (user != null) {
-            usersCollectionRef.whereEqualTo("username", user.username)
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    for (documentSnapshot in querySnapshot) {
-                        val userRef = usersCollectionRef.document(documentSnapshot.id)
-                        userRef.get().addOnSuccessListener { innerDocumentSnapshot ->
-                            if (innerDocumentSnapshot.exists()) {
-                                var existingScore = innerDocumentSnapshot.getLong("score") ?: 0
-                                var newScore = existingScore - scoreValue
-                                userRef.update("score", newScore)
-                            }
-                        }
-                    }
-                }
+            } catch (e: Exception) {
+                // Obrada grešaka
+                Log.e("Change Author Score", "Error updating score: ${e.message}")
+            }
         }
     }
 
@@ -352,10 +320,6 @@ class FieldRepository(
             // Obrada grešaka
             null
         }
-    }
-
-    fun stopListening() {
-        snapshotListenerRegistration?.remove()
     }
 
 

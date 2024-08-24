@@ -1,7 +1,6 @@
 package com.example.footballfieldtracker.data.model
 
 data class Review(
-    // TODO NEMAS ID
     val id: String = "",
     val user: String = "",
     val rating: Int = 0,

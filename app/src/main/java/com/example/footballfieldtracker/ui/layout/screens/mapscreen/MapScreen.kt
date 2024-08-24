@@ -62,7 +62,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
-// Todo: mora jer hoces startForegroundService, da hoces startService ne bi moralo ali probaj to posle
+// Todo: Mora jer hoces startForegroundService, da hoces startService ne bi moralo ali probaj to posle
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
@@ -76,8 +76,7 @@ fun MapScreen(
     // Context za korišćenje u aktivnostima i za request permissions
     val context = LocalContext.current
 
-    // TODO: svuda da promenis gde si pisao locationData
-    val currentUserLocation by userViewModel.locationData.collectAsState()
+    val currentUserLocation by userViewModel.currentUserLocation.collectAsState()
 
     val filteredMarkers by markerViewModel.filteredMarkers.collectAsState()
     val markers by markerViewModel.markers.collectAsState()
@@ -162,9 +161,19 @@ fun MapScreen(
             properties = properties,
             uiSettings = uiSettings,
             onMapLongClick = {
-                isAddFieldDialogOpen = true
-                markerViewModel.setLatLng(it)
-                markerViewModel.setNewAddress(reverseGeocodeLocation(context = context, it))
+                if (currentUserLocation != null) {
+                    isAddFieldDialogOpen = true
+                    markerViewModel.setLatLng(it)
+                    markerViewModel.setNewAddress(reverseGeocodeLocation(context = context, it))
+                } else {
+
+                    Toast.makeText(
+                        context,
+                        "Please enable your location in order to add marker",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
 
             }
         ) {
@@ -179,7 +188,8 @@ fun MapScreen(
                 )
 
                 // Add markers based on the filtered list or all markers
-                val markersToDisplay = if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
+                val markersToDisplay =
+                    if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
                 markersToDisplay.forEach { marker ->
                     Marker(
                         state = MarkerState(
@@ -187,9 +197,10 @@ fun MapScreen(
                         ),
                         title = marker.name,
                         onClick = {
-                           fieldViewModel.setCurrentFieldState(marker)
+                            fieldViewModel.setCurrentFieldState(marker)
                             navController.navigate(Screens.Field.name)
                             true // Indicate that the click event was handled
+
                         }
                     )
                 }
@@ -197,7 +208,6 @@ fun MapScreen(
         }
 
 
-        // TODO: ovde je pikazi ali align se budi ne prepoznaje da treba u ovaj scope
         // Todo: Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
         if (currentUserLocation != null) {
             IconButton(
@@ -218,28 +228,28 @@ fun MapScreen(
             }
         }
 
-
-        Button(
-            onClick = { isFilteredDialogOpen = true },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
-                .size(56.dp), // Set the size to be circular
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 20.dp
-            ),
-            shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(5.dp) // No extra padding inside the button
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search, // Replace with your desired icon
-                contentDescription = "Filter",
-                tint = Color.White // Adjust icon color if needed
-            )
+        if (currentUserLocation != null) {
+            Button(
+                onClick = { isFilteredDialogOpen = true },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .size(56.dp), // Set the size to be circular
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 20.dp
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(5.dp) // No extra padding inside the button
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search, // Replace with your desired icon
+                    contentDescription = "Filter",
+                    tint = Color.White // Adjust icon color if needed
+                )
+            }
         }
 
-        // Kad sam ovo stavio inzad google map nije htelo da se prikaze a kad sam ovde stavio hoce!!
-        Log.i("MapScreen", filteredMarkers.isNotEmpty().toString())
+
         if (filteredMarkers.isNotEmpty()) {
             Log.i("MapScreen", "Ovde")
             IconButton(
@@ -247,7 +257,11 @@ fun MapScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     // Todo: bljak
-                    .padding(top = 16.dp, bottom =  24.dp, start = 130.dp) // Adjust padding as needed
+                    .padding(
+                        top = 16.dp,
+                        bottom = 24.dp,
+                        start = 130.dp
+                    ) // Adjust padding as needed
                     .size(40.dp) // Larger size for the button
             ) {
                 Icon(

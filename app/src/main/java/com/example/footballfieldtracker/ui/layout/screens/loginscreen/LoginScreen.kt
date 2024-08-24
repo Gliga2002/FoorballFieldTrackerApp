@@ -44,7 +44,7 @@ import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
 
-// TODO: Validacija
+
 
 @Composable
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
@@ -119,6 +119,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                         if (success) {
                             navController.navigate(Screens.GoogleMap.name)
                             loginViewModel.resetState()
+                            Toast.makeText(context, "Login succeed", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                         }

@@ -53,26 +53,28 @@ enum class Screens {
     Field
 }
 
-// TODO: STAVI OVO SVE U JEDAN COMPOSABLE
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun FootballApp(
+fun FootballFieldApp(
     loginViewModel: LoginViewModel,
     registerViewModel: RegisterViewModel,
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
     fieldViewModel: FieldViewModel,
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
-) {
 
+) {
     // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
-    // Todo: kad imas vreme refaktorisi ovo, neka ga dole sta ce ti ovde
     val currentUser by userViewModel.currentUser.collectAsState()
     val isLoading by userViewModel.loading.collectAsState()
 
+    if (currentUser != null) {
+        userViewModel.loadingFinishes()
+    }
+
 
     if (isLoading) {
-        // Show a loading indicator while checking the user status
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -80,118 +82,101 @@ fun FootballApp(
             CircularProgressIndicator()
         }
     } else {
-        FootballFieldApp(
-            loginViewModel = loginViewModel,
-            registerViewModel = registerViewModel,
-            userViewModel = userViewModel,
-            currentUser = currentUser,
-            markerViewModel = markerViewModel,
-            fieldViewModel = fieldViewModel,
-            defaultnearbyfieldcontroller = defaultnearbyfieldcontroller
-        )
-    }
+        val navController: NavHostController = rememberNavController()
+        val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val coroutineScope: CoroutineScope = rememberCoroutineScope()
 
+        val startDestination =
+            if (currentUser != null) Screens.GoogleMap.name else Screens.Login.name
 
-}
-
-// TODO: u zavisnosti od starting screen, ces da pokazes topbar
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun FootballFieldApp(
-    loginViewModel: LoginViewModel,
-    registerViewModel: RegisterViewModel,
-    userViewModel: UserViewModel,
-    currentUser: User?,
-    markerViewModel: MarkerViewModel,
-    fieldViewModel: FieldViewModel,
-    defaultnearbyfieldcontroller: NearbyFieldsDetectionController
-) {
-    val navController: NavHostController = rememberNavController()
-    val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val coroutineScope: CoroutineScope = rememberCoroutineScope()
-
-    val startDestination = if (currentUser != null) Screens.GoogleMap.name else Screens.Login.name
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = false,
-        drawerContent = {
-            ModalDrawerSheet {
-                DrawerContent(
-                    menus = menus,
-                    currentUser = currentUser,
-                    onAction = { route ->
-                        coroutineScope.launch {
-                            drawerState.close() // Zatvori drawer u oba slučaja
-                            route?.let {
-                                navController.navigate(it) // Navigiraj ako ruta nije null
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = false,
+            drawerContent = {
+                ModalDrawerSheet {
+                    DrawerContent(
+                        menus = menus,
+                        currentUser = currentUser,
+                        onAction = { route ->
+                            coroutineScope.launch {
+                                drawerState.close() // Zatvori drawer u oba slučaja
+                                route?.let {
+                                    navController.navigate(it) // Navigiraj ako ruta nije null
+                                }
                             }
                         }
-                    }
 
 
-                )
-            }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                CustomAppBar(
-                    drawerState,
-                    loginViewModel,
-                    fieldViewModel,
-                    navController
-                )
-            },
-            content = { paddingValues ->
-                NavHost(
-                    navController = navController,
-                    startDestination = startDestination,
-                    Modifier.padding(paddingValues)
-                ) {
-                    composable(Screens.Register.name) {
-                        RegisterScreen(
-                            navController = navController,
-                            registerViewModel = registerViewModel
-                        )
-                    }
-                    composable(Screens.Login.name) {
-                        LoginScreen(navController = navController, loginViewModel = loginViewModel)
-                    }
-                    composable(Screens.GoogleMap.name) {
-                        MapScreen(
-                            navController = navController,
-                            userViewModel = userViewModel,
-                            markerViewModel = markerViewModel,
-                            fieldViewModel = fieldViewModel,
-                            defaultnearbyfieldcontroller = defaultnearbyfieldcontroller)
-                    }
-
-                    composable(Screens.Leadboard.name) {
-                        LeadboardScreen(navController = navController, userViewModel = userViewModel)
-                    }
-
-                    composable(Screens.Fields.name) {
-                        // ispravi, ne moze username!!!!!
-                        // i ispravi da uzmes zadva dva iz Grad/Drzava
-                        FieldsScreen(
-                            navController = navController,
-                            userViewModel = userViewModel,
-                            markerViewModel = markerViewModel,
-                            fieldViewModel = fieldViewModel)
-                    }
-
-                    composable(Screens.Field.name) {
-                        FieldScreen(
-                            navController = navController,
-                            userViewModel = userViewModel,
-                            fieldViewModel = fieldViewModel
-                        )
-                    }
+                    )
                 }
             }
-        )
+        ) {
+            Scaffold(
+                topBar = {
+                    CustomAppBar(
+                        drawerState,
+                        loginViewModel,
+                        fieldViewModel,
+                        markerViewModel,
+                        navController
+                    )
+                },
+                content = { paddingValues ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        Modifier.padding(paddingValues)
+                    ) {
+                        composable(Screens.Register.name) {
+                            RegisterScreen(
+                                navController = navController,
+                                registerViewModel = registerViewModel
+                            )
+                        }
+                        composable(Screens.Login.name) {
+                            LoginScreen(
+                                navController = navController,
+                                loginViewModel = loginViewModel
+                            )
+                        }
+                        composable(Screens.GoogleMap.name) {
+                            MapScreen(
+                                navController = navController,
+                                userViewModel = userViewModel,
+                                markerViewModel = markerViewModel,
+                                fieldViewModel = fieldViewModel,
+                                defaultnearbyfieldcontroller = defaultnearbyfieldcontroller
+                            )
+                        }
+
+                        composable(Screens.Leadboard.name) {
+                            LeadboardScreen(
+                                userViewModel = userViewModel
+                            )
+                        }
+
+                        composable(Screens.Fields.name) {
+                            FieldsScreen(
+                                navController = navController,
+                                userViewModel = userViewModel,
+                                markerViewModel = markerViewModel,
+                                fieldViewModel = fieldViewModel
+                            )
+                        }
+
+                        composable(Screens.Field.name) {
+                            FieldScreen(
+                                navController = navController,
+                                userViewModel = userViewModel,
+                                fieldViewModel = fieldViewModel
+                            )
+                        }
+                    }
+                }
+            )
+        }
     }
+
 }
 
 

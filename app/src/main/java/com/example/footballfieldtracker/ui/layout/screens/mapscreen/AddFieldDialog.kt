@@ -32,8 +32,7 @@ import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 @Composable
 fun AddFieldDialog(
     context: Context,
-    // Todo: promeni ime
-    mapViewModel: MarkerViewModel,
+    markerViewModel: MarkerViewModel,
     onDismiss: () -> Unit
 ) {
 
@@ -58,13 +57,13 @@ fun AddFieldDialog(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = mapViewModel.address)
+                Text(text = markerViewModel.address)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = mapViewModel.name,
-                    onValueChange = { mapViewModel.name = it },
+                    value = markerViewModel.name,
+                    onValueChange = { markerViewModel.name = it },
                     label = { Text("Enter Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -78,7 +77,7 @@ fun AddFieldDialog(
                     onExpandedChange = { expanded = it }
                 ) {
                     OutlinedTextField(
-                        value = mapViewModel.selectedOption,
+                        value = markerViewModel.selectedOption,
                         onValueChange = { /* No-op */ },
                         label = { Text("Select Option") },
                         readOnly = true,
@@ -97,7 +96,7 @@ fun AddFieldDialog(
                         options.forEach { option ->
                             DropdownMenuItem(
                                 onClick = {
-                                    mapViewModel.selectedOption = option
+                                    markerViewModel.selectedOption = option
                                     expanded = false
                                 },
                                 text = {
@@ -111,19 +110,20 @@ fun AddFieldDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ProfileImage(mapViewModel.imageUri) { newUri ->
-                    mapViewModel.imageUri = newUri // Ažurira sliku kada korisnik izabere novu
+                ProfileImage(markerViewModel.imageUri) { newUri ->
+                    markerViewModel.imageUri = newUri // Ažurira sliku kada korisnik izabere novu
                 }
             }
         },
         confirmButton = {
             Button(onClick = {
-                mapViewModel.saveData() { success, errorMsg ->
+                markerViewModel.saveData { success, toastMsg ->
                     if (success) {
-                        mapViewModel.resetState()
+                        markerViewModel.resetState()
                         onDismiss()
+                        Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                     }
 
                 }

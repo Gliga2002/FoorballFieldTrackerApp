@@ -110,7 +110,7 @@ fun FilterFieldDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
          
-
+                // Todo: Ovo da ne prikazes ako nije dozvolio lokaciju!!
                 // Radius slider
                 Text("Radius: ${markerViewModel.filteredRadius} km")
                 Slider(
@@ -149,11 +149,11 @@ fun FilterFieldDialog(
         confirmButton = {
             Button(
                 onClick = {
-                   Log.i("Filter", "Filtitram...")
                     markerViewModel.applyFilters(currentUserLocation) { isFound ->
                        if (isFound) {
                            markerViewModel.resetFilter()
                            onDismiss()
+                           Toast.makeText(context, "Filter successfully applied.", Toast.LENGTH_SHORT).show()
                        } else {
                            Toast.makeText(context, "We were unable to find any data for the requested field filter.", Toast.LENGTH_SHORT).show()
                        }

@@ -45,8 +45,7 @@ import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.layout.util.ProfileImage
 import com.example.footballfieldtracker.ui.viewmodels.RegisterViewModel
 
-// Todo: Validacija inputa (pogledaj CampLife kako izvrsila validaciju) i proveri da li radi
-// Todo: Refactor ovo u view model da prezivi configuration changes
+
 @Composable
 fun RegisterScreen(
     registerViewModel: RegisterViewModel,
@@ -230,12 +229,13 @@ fun RegisterScreen(
                         registerViewModel.lastName,
                         registerViewModel.phoneNumber,
                         registerViewModel.imageUri
-                    ) { success, errorMsg ->
+                    ) { success, toastMsg ->
                         if (success) {
                             navController.navigate(Screens.Login.name)
                             registerViewModel.resetState()
+                            Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                         }
                     }
                 },

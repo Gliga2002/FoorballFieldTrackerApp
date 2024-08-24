@@ -23,6 +23,7 @@ class UserRepository(
 
     private var listenerRegistration: ListenerRegistration? = null
     // current user i location mogu ti budu data source ali ne mora se bakces
+    private var userListenerRegistration: ListenerRegistration? = null
 
 
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -32,62 +33,38 @@ class UserRepository(
     private val _allUsers = MutableStateFlow<List<User>>(emptyList())
     val allUsers: StateFlow<List<User>> = _allUsers
 
-    // Todo: promeni svuda naziv na currentUserLocation
-    private val _locationData = MutableStateFlow<LocationData?>(null)
-    val locationData: StateFlow<LocationData?> = _locationData
+    private val _currentUserLocation = MutableStateFlow<LocationData?>(null)
+    val currentUserLocation: StateFlow<LocationData?> = _currentUserLocation
 
     fun updateLocationData(locationData: LocationData) {
-        _locationData.value = locationData
-    }
-
-    fun updateCurrentUser(user: User?) {
-        _currentUser.value = user
+        _currentUserLocation.value = locationData
     }
 
 
-    fun loginWithEmailAndPassword(
+    suspend fun loginWithEmailAndPassword(
         email: String,
         password: String,
-        callback: (User?) -> Unit
+        callback: (Boolean) -> Unit
     ) {
-        FirebaseAuth.getInstance()
-            .signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener() {
-                // User login successful, retrieve user details from Firestore
-                val user = FirebaseAuth.getInstance().currentUser
-                val uid = user?.uid ?: ""
+         try {
+            // Sign in with email and password
+            val authResult = FirebaseAuth.getInstance()
+                .signInWithEmailAndPassword(email, password)
+                .await() // Wait for authentication result
 
-                // Fetch user details from Firestore
-                FirebaseFirestore.getInstance().collection("users")
-                    .document(uid)
-                    .get()
-                    .addOnSuccessListener { document ->
-                        if (document != null && document.exists()) {
-                            // User document exists, extract user data
-                            val userData = document.toObject(User::class.java)
-                            userData?.let { currentUser ->
-                                callback(currentUser) // Return the User object
-
-                            }
-
-                        } else {
-                            // Handle if the user document doesn't exist
-                            callback(null)
-
-                        }
-                    }
-                    .addOnFailureListener {
-                        // Handle any errors while fetching user details
-                        callback(null)
-                    }
-
-
+            if (authResult.user != null) {
+                startObservingUser()
+                callback(true)
+            } else {
+                callback(false)
             }
-            .addOnFailureListener {
-                // Handle any errors while fetching user details
-                callback(null)
 
-            }
+        } catch (e: Exception) {
+            // Handle errors
+            e.printStackTrace()
+            null
+        }
+
     }
 
     suspend fun registerUser(
@@ -104,7 +81,7 @@ class UserRepository(
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: return callback(false)
 
-            // ovo si mogao sa User class da instanciras, rekli su na firestore https://firebase.google.com/docs/firestore/manage-data/add-data
+            // todo: ovo si mogao sa User class da instanciras, rekli su na firestore https://firebase.google.com/docs/firestore/manage-data/add-data
             val user = mapOf(
                 "id" to userId,
                 "email" to email,
@@ -133,29 +110,34 @@ class UserRepository(
         }
     }
 
-    suspend fun fetchCurrentUser(
-        cb: (User?) -> Unit
-    ) {
-        val firebaseUser = auth.currentUser
-        return if (firebaseUser != null) {
-            try {
-                val userDocument = firestore.collection("users")
-                    .document(firebaseUser.uid)
-                    .get()
-                    .await()
 
-                val user = userDocument.toObject(User::class.java)
-                cb(user)
-            } catch (e: Exception) {
-                // Handle exceptions (e.g., log error)
-                cb(null)
+    fun startObservingUser() {
+        val userId = auth.currentUser?.uid ?: return
+        val userDocRef = firestore.collection("users").document(userId)
+
+        userListenerRegistration = userDocRef.addSnapshotListener { snapshot, exception ->
+            if (exception != null) {
+                Log.e("UserRepository", "Error fetching user data", exception)
+                return@addSnapshotListener
             }
-        } else {
-            cb(null)
+
+            if (snapshot != null && snapshot.exists()) {
+                val user = snapshot.toObject(User::class.java)
+                _currentUser.value = user
+                Log.i("UserRepository", "User data updated: $user")
+            } else {
+                _currentUser.value = null
+            }
         }
     }
 
-    // Dodao
+    fun stopObservingUser() {
+        userListenerRegistration?.remove()
+    }
+
+
+
+    // Dobro je
     fun fetchAllUsers() {
         listenerRegistration = firestore.collection("users")
             .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -180,46 +162,10 @@ class UserRepository(
     }
 
 
-
-
-
-    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
-    //-------------------------------------------------------------------------------
-
-    private val _userData = MutableStateFlow<User?>(null)
-    val userData: StateFlow<User?> get() = _userData.asStateFlow()
-
-    private var userListenerRegistration: ListenerRegistration? = null
-
-    fun startObservingUser() {
-        val userId = auth.currentUser?.uid ?: return
-        val userDocRef = firestore.collection("users").document(userId)
-
-        userListenerRegistration = userDocRef.addSnapshotListener { snapshot, exception ->
-            if (exception != null) {
-                Log.e("UserRepository", "Error fetching user data", exception)
-                return@addSnapshotListener
-            }
-
-            if (snapshot != null && snapshot.exists()) {
-                val user = snapshot.toObject(User::class.java)
-                _userData.value = user
-                Log.i("UserRepository", "User data updated: $user")
-            } else {
-                _userData.value = null
-            }
-        }
-    }
-
-    fun stopObservingUser() {
-        userListenerRegistration?.remove()
-    }
-    //-------------------------------------------------------------------------------
-
     fun signOut(callback: (Boolean) -> Unit) {
         try {
             auth.signOut()
-            startObservingUser()
+            stopObservingUser()
             callback(true)
         } catch (e: Exception) {
             // Log error or handle failure

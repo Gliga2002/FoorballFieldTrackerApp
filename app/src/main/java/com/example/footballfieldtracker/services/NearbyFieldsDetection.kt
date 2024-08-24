@@ -48,7 +48,7 @@ class NearbyFieldsDetection : Service() {
     override fun onCreate() {
         super.onCreate()
         app = application as MainApplication
-        currentUserLocation = app.container.userRepository.locationData
+        currentUserLocation = app.container.userRepository.currentUserLocation
         firestore = FirebaseFirestore.getInstance()
         // inicijalizacija, kada se pozove, jednom se izvrsi, jos nije startovan
     }
@@ -89,9 +89,8 @@ class NearbyFieldsDetection : Service() {
 
 
         startForeground(1, notification.build())
-        // Prikazivanje Firebase kolekcije i obrada promjena u realnom vremenu
         observeMarkers()
-        // Todo: Hocu da pozoves firebase nad kolekcijom markers i da uzivo pratis promene. Zatim hocu da u odnosu na trenutnu lokaciju (currentUser), detektujes da li se nalazi neki marker i radijusu od 10km, ukoliko jeste, izmeni mi notification da kazes da je pronadjen
+
 
 
 

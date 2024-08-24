@@ -46,14 +46,9 @@ fun ReviewDialog(
     onDismissRequest: () -> Unit,
     fieldId: String,
     fieldViewModel: FieldViewModel,
-    onAddReview: (Int, String) -> Unit
 ) {
 
     val context = LocalContext.current
-
-
-    // Log trenutnog stanja
-    Log.d("ReviewDialog", "Rating: , Selected Stars: ${fieldViewModel.selectedStars}")
 
 
     AlertDialog(
@@ -65,19 +60,18 @@ fun ReviewDialog(
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
                 ) {
                     // Display stars based on rating
                     (1..5).forEach { index ->
-                        Log.i("ReviewDialog", "Izvrsavam opet")
                         IconButton(
                             onClick = {
                                 fieldViewModel.selectedStars = index
-                                Log.d("ReviewDialog", "Clicked Star: $index")
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
-                            // Todo: nece da mi radi sa painter resource
                             Icon(
                                 imageVector = if (index <= fieldViewModel.selectedStars) Icons.Filled.Star else Icons.Outlined.Star,
                                 tint = if (index <= fieldViewModel.selectedStars) Color.Yellow else Color.Gray,
@@ -92,30 +86,35 @@ fun ReviewDialog(
                     value = fieldViewModel.comment,
                     onValueChange = {
                         fieldViewModel.comment = it
-                        Log.d("ReviewDialog", "Comment Updated: ${fieldViewModel.comment}")
-                                    },
+                    },
                     placeholder = { Text("Add a comment") },
                     maxLines = 3,
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Done
                     ),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    Log.i("ReviwDialog", "Added Review")
-                    Log.i("ReviwDialog", "Comment: ${fieldViewModel.comment}, Starts: ${fieldViewModel.selectedStars}")
-                    // zovi viewModel a on repo i nek proveri za usera da li je dodao, onda neka doda i neka poveca auth skore i marker rating
-                    // trebao si da cuvas to kao live data, taj selektovani marker ali razmisli
                     fieldViewModel.createReview(fieldId = fieldId) { isNotReviewed ->
                         if (isNotReviewed) {
-                            Toast.makeText(context, "Review created successfully", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Review created successfully",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             fieldViewModel.resetReviewData()
                         } else {
-                            Toast.makeText(context, "Failed to create review or already reviewed", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Failed to create review or already reviewed",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                     onDismissRequest()

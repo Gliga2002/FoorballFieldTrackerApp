@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.footballfieldtracker.services.NearbyFieldsDetection
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
-import com.example.footballfieldtracker.ui.FootballApp
+import com.example.footballfieldtracker.ui.FootballFieldApp
 import com.example.footballfieldtracker.ui.theme.FootballFieldTrackerTheme
 import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.FieldViewModelFactory
@@ -30,7 +30,7 @@ import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModelFactory
 import com.google.android.gms.location.LocationServices
 
-// Todo: za single screen gledaj lab vezbe za poi
+
 class MainActivity : ComponentActivity() {
     // Iako se Application class kreira pre Activity, ti nisi postovao lyfecyle pristupanja resurima  tokom kreiranj, i izgleda da je tokom kompliacije ili izvrsenja, prvo pokusao da pristupi Application pre nego sto je on uopste kreiran
     // Todo: 1 greska je bila jer si pristupao container pre nego sto je on bio kreira, a ovim nacinom pristupas tek kada treba, ne radis ti to eksplicitno (!!!!pristupio si application container globaly, a trebao si sa lateinit!!!)
@@ -51,10 +51,8 @@ class MainActivity : ComponentActivity() {
 
     private val fieldViewModel: FieldViewModel by viewModels {
         FieldViewModelFactory(
-            // markerRepository mi ne treba to izbrisi
-            markerRepository = (application as MainApplication).container.markerRepository,
-            fieldRepository = (application as MainApplication).container.fieldRepository
-        )
+            // markerRepository mi ne treba to izbris
+            fieldRepository = (application as MainApplication).container.fieldRepository)
     }
 
 
@@ -78,15 +76,16 @@ class MainActivity : ComponentActivity() {
             override fun startNearbyFieldsDetectionService() {
                 Intent(applicationContext, NearbyFieldsDetection::class.java).apply {
                     action = NearbyFieldsDetection.ACTION_START
-                    startForegroundService(this)
+                    startService(this)
                 }
             }
 
+            // Todo: istrazi opet za service i razlika izmedju stopService i stopForegroundService
             @RequiresApi(Build.VERSION_CODES.O)
             override fun stopNearbyFieldsDetectionService() {
                 Intent(applicationContext, NearbyFieldsDetection::class.java).apply {
                     action = NearbyFieldsDetection.ACTION_STOP
-                    startForegroundService(this)
+                    startService(this)
                 }
             }
         }
@@ -98,7 +97,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FootballApp(
+                    FootballFieldApp(
                         loginViewModel,
                         registerViewModel,
                         userViewModel,

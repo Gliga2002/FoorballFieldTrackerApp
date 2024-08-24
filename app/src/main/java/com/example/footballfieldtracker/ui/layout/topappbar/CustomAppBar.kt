@@ -1,6 +1,7 @@
 package com.example.footballfieldtracker.ui.layout.topappbar
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -26,6 +28,7 @@ import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
+import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,8 +37,11 @@ fun CustomAppBar(
     drawerState: DrawerState,
     loginViewModel: LoginViewModel,
     fieldViewModel: FieldViewModel,
+    markerViewModel: MarkerViewModel,
     navController: NavHostController
 ) {
+
+    val context = LocalContext.current
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -107,10 +113,12 @@ fun CustomAppBar(
                     loginViewModel.signOut { success ->
                         if (success) {
                             navController.navigate(Screens.Login.name) {
-                                popUpTo(Screens.GoogleMap.name) { inclusive = true }
+                            popUpTo(Screens.GoogleMap.name) { inclusive = true }
                             }
+                            markerViewModel.removeFilters()
+                            Toast.makeText(context, "Successfully signed out", Toast.LENGTH_SHORT).show()
                         } else {
-                            Log.d("Greska", "Greska prilikom sign out")
+                            Toast.makeText(context, "Sign out failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                     // Close the dialog after action

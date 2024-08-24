@@ -9,6 +9,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,9 @@ class MarkerRepository(
 
     private val _filteredMarkers = MutableStateFlow<List<Field>>(emptyList())
     val filteredMarkers: StateFlow<List<Field>> = _filteredMarkers.asStateFlow()
+
+
+    private var markersListenerRegistration: ListenerRegistration? = null
 
     init {
         fetchMarkers()
@@ -57,6 +61,11 @@ class MarkerRepository(
             _markers.value = updatedMarkers
         }
 
+    }
+
+    // Funkcija za uklanjanje listener-a
+    fun removeMarkersListener() {
+        markersListenerRegistration?.remove()
     }
 
 
@@ -176,13 +185,18 @@ class MarkerRepository(
 
     // mogao si sa compareTo
     private fun isDateInRange(locationDate: Date, filterDate: String): Boolean {
-        val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy.", Locale.US)
         val filterDateParts = filterDate.split(" - ")
+
+        Log.i("DateFormat", filterDateParts[0])
+        Log.i("DateFormat", filterDateParts[1])
 
         try {
             if (filterDateParts.size == 2) {
                 val startDate = dateFormat.parse(filterDateParts[0])
                 val endDate = dateFormat.parse(filterDateParts[1])
+
+
 
                 if (startDate != null && endDate != null) {
                     return locationDate >= startDate && locationDate <= endDate

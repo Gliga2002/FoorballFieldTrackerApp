@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class FieldViewModel(
     // ne treba ti markerRepository
-    private val markerRepository: MarkerRepository, private val fieldRepository: FieldRepository
+   private val fieldRepository: FieldRepository
 ) : ViewModel() {
 
     var comment by mutableStateOf("")
@@ -32,9 +32,8 @@ class FieldViewModel(
         selectedFieldState = field
     }
 
-    // Todo: hou da prestanem da slusam kad se navigiram nazad, smisli kako
+    // Todo: Hocu da prestanem da slusam kad se navigiram nazad, smisli kako
     val selectedField: StateFlow<Field?> get() = fieldRepository.selectedField
-
 
 
     fun loadField(fieldId: String) {
@@ -43,12 +42,9 @@ class FieldViewModel(
         }
     }
 
-    fun stopListening() {
-        fieldRepository.stopListening()
-    }
     fun createReview(fieldId: String,callback: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val hasReviewed = fieldRepository.hasUserReviewed(fieldId)
+            val hasReviewed = fieldRepository.hasUserReviewed()
             if (!hasReviewed) {
                 fieldRepository.addReview(fieldId, text = comment, rating = selectedStars)
                 callback(true)
@@ -71,12 +67,10 @@ class FieldViewModel(
         }
     }
 
-    // kreiraj funkciju koja proverava da li je review ocenjen od strane korisnika
-
 
     override fun onCleared() {
         super.onCleared()
-        stopListening()
+        fieldRepository.stopListening()
     }
 
 
@@ -84,14 +78,13 @@ class FieldViewModel(
 
 
 class FieldViewModelFactory(
-    private val markerRepository: MarkerRepository,
     private val fieldRepository: FieldRepository // Dodano polje za FieldRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FieldViewModel::class.java)) {
-            return FieldViewModel(markerRepository, fieldRepository) as T
+            return FieldViewModel(fieldRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

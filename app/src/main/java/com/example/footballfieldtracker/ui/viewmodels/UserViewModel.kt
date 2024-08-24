@@ -21,52 +21,43 @@ class UserViewModel(
 ) : ViewModel() {
 
     private val _loading = MutableStateFlow(true)
-    val loading: StateFlow<Boolean> = _loading
+    var loading: StateFlow<Boolean> = _loading
 
-    // Dodao
+
     val allUsers: StateFlow<List<User>> = userRepository.allUsers
 
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
-    // ovo je pravi currentUser
-    val userData: StateFlow<User?> = userRepository.userData
 
-    val locationData: StateFlow<LocationData?> = userRepository.locationData
-
-
+    val currentUserLocation: StateFlow<LocationData?> = userRepository.currentUserLocation
 
 
     init {
         loadCurrentUser()
-        // Dodao
         loadAllUsers()
     }
 
-
-    fun loadCurrentUser(
-    ) {
+    fun loadCurrentUser() {
         viewModelScope.launch {
-            userRepository.fetchCurrentUser { user ->
-                if (user != null) {
-                    userRepository.updateCurrentUser(user) // Update the current user in the repository
-                    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
-                    userRepository.startObservingUser()
-                }
-                _loading.value = false  // Loading is done
-            }
-        }
+            userRepository.startObservingUser()
+            // ne moze ovako on je to sa cb, ili napravi onu funkciju da bude await ili sa cb
 
+
+        }
+    }
+
+    fun loadingFinishes() {
+        _loading.value = false
     }
 
     // Dodao
     fun loadAllUsers() {
         viewModelScope.launch {
-           userRepository.fetchAllUsers()
+            userRepository.fetchAllUsers()
         }
     }
 
     fun updateLocation() {
-        // TODO: ovde je izvrsi uz potrebne modifikacije
         viewModelScope.launch {
             locationClient.getLocationUpdates(1000L)
                 .catch { e -> Log.e("UserViewModel", "Location update error", e) }
@@ -84,9 +75,8 @@ class UserViewModel(
         super.onCleared()
         // Stop listening when ViewModel is cleared
         userRepository.stopFetchAllUsers()
+        userRepository.stopObservingUser()
     }
-
-
 
 
 }

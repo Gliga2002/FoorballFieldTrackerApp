@@ -11,6 +11,7 @@ data class Field(
     val address: String = "",
     val longitude: Double = 0.0,
     val latitude: Double = 0.0,
+    // nije bas ovo pametno, bolje da je isla u firestore kao collection jer za array nema metoda
     val reviews: MutableList<Review> = mutableListOf(),
     val avgRating: Double = 0.0,
     val reviewCount: Int = 0,

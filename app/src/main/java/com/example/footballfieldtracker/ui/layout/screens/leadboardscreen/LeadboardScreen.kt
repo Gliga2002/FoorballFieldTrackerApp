@@ -32,7 +32,7 @@ import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldCard
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 @Composable
-fun LeadboardScreen(navController: NavHostController, userViewModel: UserViewModel) {
+fun LeadboardScreen(userViewModel: UserViewModel) {
     val users by userViewModel.allUsers.collectAsState(emptyList())
 
     LazyColumn {
@@ -61,10 +61,6 @@ fun UserCard(user: User) {
                         .clip(MaterialTheme.shapes.small),
                     contentScale = ContentScale.Crop,
                     painter = painter,
-
-                    // Content Description is not needed here - image is decorative, and setting a null content
-                    // description allows accessibility services to skip this element during navigation.
-
                     contentDescription = null
                 )
                 Column(modifier = Modifier) {

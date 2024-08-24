@@ -16,49 +16,42 @@ import kotlinx.coroutines.launch
 class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     var email by mutableStateOf("")
-    var password by  mutableStateOf("")
+    var password by mutableStateOf("")
 
-    var passwordVisible by  mutableStateOf(false)
-
-
+    var passwordVisible by mutableStateOf(false)
 
 
-    // Funkcija za resetovanje stanja na početne vrednosti
     fun resetState() {
         email = ""
         password = ""
         passwordVisible = false
     }
 
+
     fun loginUserWithEmailAndPassword(
-        email: String,
-        password: String,
-        callback: (Boolean) -> Unit
+        email: String, password: String, callback: (Boolean) -> Unit
     ) {
         viewModelScope.launch {
-            userRepository.loginWithEmailAndPassword(email, password) { user ->
-                if (user != null) {
-                    userRepository.updateCurrentUser(user) // Update the current user in the repository
-                    // todo: ovo izmeni ovo sam radio zbog fieldViewModel
-                    userRepository.startObservingUser()
-                    callback(true) // Success
+            userRepository.loginWithEmailAndPassword(email, password) { success ->
+                if (success) {
+                    callback(true)
                 } else {
-                    callback(false) // Failure
+                    callback(false)
                 }
+
             }
         }
-    }
 
+    }
 
 
     fun signOut(callback: (Boolean) -> Unit) {
         viewModelScope.launch {
             userRepository.signOut { success ->
                 if (success) {
-                    // Clear current user data if sign-out is successful
-                    userRepository.updateCurrentUser(null)
+                    callback(success)
                 }
-                callback(success)
+
             }
         }
     }
@@ -66,7 +59,8 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
 
 }
 
-class LoginViewModelFactory(private val userRepository: UserRepository) : ViewModelProvider.Factory {
+class LoginViewModelFactory(private val userRepository: UserRepository) :
+    ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {

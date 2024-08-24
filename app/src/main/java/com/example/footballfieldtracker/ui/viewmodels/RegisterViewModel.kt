@@ -90,7 +90,9 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
                 phoneNumber,
                 imageUri
             ) { success ->
-                callback(success, "Uspesno ste se registrovali")
+                if (success) {
+                    callback(success, "Uspesno ste se registrovali")
+                }
 
             }
         }

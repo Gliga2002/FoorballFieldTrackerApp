@@ -62,6 +62,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
+// Todo: Navigiraj se ka toj lokaciji na mapi
+// Todo: Dodaj da imas horizontalne slike
+// Todo: Dodaj launcher icon
+// Todo: Gledaj na <- da se navigiras ka tom markeru
 @Composable
 fun FieldScreen(
     navController: NavController,
@@ -76,8 +81,7 @@ fun FieldScreen(
 
     // Observe the state
     val selectedField by fieldViewModel.selectedField.collectAsState()
-    // TODO: svuda da promenis gde si pisao locationData
-    val currentUserData by userViewModel.userData.collectAsState()
+    val currentUser by userViewModel.currentUser.collectAsState()
 
 
 
@@ -85,8 +89,6 @@ fun FieldScreen(
         fieldViewModel.loadField(selectedFieldState.id)
     }
 
-
-    Log.i("AddReview", "Ovde")
 
     var isReviewDialogOpen by remember { mutableStateOf(false) }
 
@@ -159,7 +161,6 @@ fun FieldScreen(
                 )
             }
 
-            // Todo: Show reviews!!
             LazyColumn(
                 modifier = Modifier
                     .padding(start = 16.dp, top = 8.dp, end = 0.dp, bottom = 8.dp)
@@ -167,13 +168,12 @@ fun FieldScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                selectedField?.let {
-                    items(it.reviews) {
-                        currentUserData?.likedReviews?.let { it1 ->
-                            Log.i("FieldScreen", "LikedReviews: ${it1} currReview: ${it.id}")
+                selectedField?.let { field ->
+                    items(field.reviews) { review ->
+                        currentUser?.likedReviews?.let { likedReviews ->
                             FieldReview(
-                                review = it,
-                                hasUserReviewed = it1.contains(it.id),
+                                review = review,
+                                hasUserReviewed = likedReviews.contains(review.id),
                                 handleLikedReview = { review, isLiked -> fieldViewModel.handleLikedReviews(review, isLiked)}
                             )
                         }
@@ -208,11 +208,7 @@ fun FieldScreen(
             ReviewDialog(
                 onDismissRequest = { isReviewDialogOpen = false },
                 fieldViewModel = fieldViewModel,
-                fieldId =  it.id,
-                onAddReview = { rating, comment ->
-                    // Handle the review submission
-                    println("Rating: $rating, Comment: $comment")
-                }
+                fieldId =  it.id
             )
         }
     }
@@ -225,8 +221,6 @@ fun FieldReview(
     review: Review,
     hasUserReviewed: Boolean,
     handleLikedReview: (Review, Boolean) -> Unit) {
-
-    Log.i("FieldScreen", "hasUserReviewed: ${hasUserReviewed}")
 
 
     Card(
@@ -257,8 +251,8 @@ fun FieldReview(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                val starCount = 5
-                repeat(starCount) { index ->
+
+                (1..5).forEach { index ->
                     Icon(
                         imageVector = if (index <= review.rating) Icons.Filled.Star else Icons.Outlined.Star,
                         contentDescription = null,
@@ -302,7 +296,6 @@ fun FieldReview(
 }
 
 // TODO: Izdvoj ovo u utility funcions
-
 fun formatDate(timestamp: Timestamp): String {
     val date: Date = timestamp.toDate()
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
