@@ -62,7 +62,7 @@ class UserRepository(
         } catch (e: Exception) {
             // Handle errors
             e.printStackTrace()
-            null
+             callback(false)
         }
 
     }
@@ -81,7 +81,7 @@ class UserRepository(
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: return callback(false)
 
-            // todo: ovo si mogao sa User class da instanciras, rekli su na firestore https://firebase.google.com/docs/firestore/manage-data/add-data
+            // Ovo si mogao sa User class da instanciras, rekli su na firestore https://firebase.google.com/docs/firestore/manage-data/add-data
             val user = mapOf(
                 "id" to userId,
                 "email" to email,
@@ -110,9 +110,16 @@ class UserRepository(
         }
     }
 
+    fun isUserLoggedIn(): Boolean {
+        val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        return currentUser != null
+    }
 
-    fun startObservingUser() {
+    fun startObservingUser()  {
+        Log.i("UserRepository", "Ovde")
         val userId = auth.currentUser?.uid ?: return
+        Log.i("UserRepository", userId)
         val userDocRef = firestore.collection("users").document(userId)
 
         userListenerRegistration = userDocRef.addSnapshotListener { snapshot, exception ->
@@ -124,7 +131,9 @@ class UserRepository(
             if (snapshot != null && snapshot.exists()) {
                 val user = snapshot.toObject(User::class.java)
                 _currentUser.value = user
+
                 Log.i("UserRepository", "User data updated: $user")
+
             } else {
                 _currentUser.value = null
             }

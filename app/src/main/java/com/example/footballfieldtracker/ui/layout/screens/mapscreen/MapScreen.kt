@@ -16,13 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
@@ -161,20 +158,9 @@ fun MapScreen(
             properties = properties,
             uiSettings = uiSettings,
             onMapLongClick = {
-                if (currentUserLocation != null) {
-                    isAddFieldDialogOpen = true
-                    markerViewModel.setLatLng(it)
-                    markerViewModel.setNewAddress(reverseGeocodeLocation(context = context, it))
-                } else {
-
-                    Toast.makeText(
-                        context,
-                        "Please enable your location in order to add marker",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-
+                isAddFieldDialogOpen = true
+                markerViewModel.setLatLng(it)
+                markerViewModel.setNewAddress(reverseGeocodeLocation(context = context, it))
             }
         ) {
             // Add markers or other map features here
@@ -187,29 +173,31 @@ fun MapScreen(
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Custom color for user marker
                 )
 
-                // Add markers based on the filtered list or all markers
-                val markersToDisplay =
-                    if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
-                markersToDisplay.forEach { marker ->
-                    Marker(
-                        state = MarkerState(
-                            position = LatLng(marker.latitude, marker.longitude)
-                        ),
-                        title = marker.name,
-                        onClick = {
-                            fieldViewModel.setCurrentFieldState(marker)
-                            navController.navigate(Screens.Field.name)
-                            true // Indicate that the click event was handled
-
-                        }
-                    )
-                }
             }
+
+            // Add markers based on the filtered list or all markers
+            val markersToDisplay =
+                if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
+            markersToDisplay.forEach { marker ->
+                Marker(
+                    state = MarkerState(
+                        position = LatLng(marker.latitude, marker.longitude)
+                    ),
+                    title = marker.name,
+                    onClick = {
+                        fieldViewModel.setCurrentFieldState(marker)
+                        navController.navigate(Screens.Field.name)
+                        true // Indicate that the click event was handled
+
+                    }
+                )
+            }
+
         }
 
 
-        // Todo: Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
-        if (currentUserLocation != null) {
+        // Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
+        currentUserLocation?.let {
             IconButton(
                 onClick = { isServiceDialogOpen = true },
                 modifier = Modifier
@@ -228,35 +216,33 @@ fun MapScreen(
             }
         }
 
-        if (currentUserLocation != null) {
-            Button(
-                onClick = { isFilteredDialogOpen = true },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .size(56.dp), // Set the size to be circular
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 20.dp
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(5.dp) // No extra padding inside the button
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search, // Replace with your desired icon
-                    contentDescription = "Filter",
-                    tint = Color.White // Adjust icon color if needed
-                )
-            }
+        Button(
+            onClick = { isFilteredDialogOpen = true },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+                .size(56.dp), // Set the size to be circular
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 20.dp
+            ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(5.dp) // No extra padding inside the button
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search, // Replace with your desired icon
+                contentDescription = "Filter",
+                tint = Color.White // Adjust icon color if needed
+            )
         }
 
 
+
         if (filteredMarkers.isNotEmpty()) {
-            Log.i("MapScreen", "Ovde")
             IconButton(
                 onClick = { markerViewModel.removeFilters() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    // Todo: bljak
+                    // Todo: Smisli ako mozes bolji nacin
                     .padding(
                         top = 16.dp,
                         bottom = 24.dp,
@@ -301,10 +287,10 @@ fun MapScreen(
             )
         }
 
-        if (isFilteredDialogOpen && currentUserLocation != null) {
+        if (isFilteredDialogOpen) {
             FilterFieldDialog(
                 context = context,
-                currentUserLocation = currentUserLocation!!,
+                currentUserLocation = currentUserLocation,
                 markerViewModel = markerViewModel,
                 onDismiss = { isFilteredDialogOpen = false }
             )

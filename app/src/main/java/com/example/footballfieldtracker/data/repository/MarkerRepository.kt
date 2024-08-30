@@ -127,8 +127,8 @@ class MarkerRepository(
         author: String,
         type: String,
         date: String,
-        radius: Int,
-        currentLoc: LocationData
+        radius: Int?,
+        currentLoc: LocationData?
     ) {
         val filteredList = _markers.value.filter { location ->
 
@@ -149,18 +149,24 @@ class MarkerRepository(
 
             Log.i("FilterDebug", "Author match: $authorMatch, Type match: $typeMatch, Date match: $dateMatch")
 
+            var withinRadius: Boolean
+            if (radius != null && currentLoc != null) {
+                // Check if the marker is within the specified radius
+                val distance = calculateDistance(
+                    currentLoc.latitude,
+                    currentLoc.longitude,
+                    location.latitude,
+                    location.longitude
+                )
+                withinRadius = distance < radius
+                // Log distance and radius information
+                Log.i("FilterDebug", "Distance to marker: $distance km, Radius: $radius km, Within radius: $withinRadius")
 
-            // Check if the marker is within the specified radius
-            val distance = calculateDistance(
-                currentLoc.latitude,
-                currentLoc.longitude,
-                location.latitude,
-                location.longitude
-            )
-            val withinRadius = distance < radius
+            } else {
+                withinRadius = true
+                Log.i("FilterDebug", "Ovde")
+            }
 
-            // Log distance and radius information
-            Log.i("FilterDebug", "Distance to marker: $distance km, Radius: $radius km, Within radius: $withinRadius")
 
 
             authorMatch && typeMatch && dateMatch && withinRadius

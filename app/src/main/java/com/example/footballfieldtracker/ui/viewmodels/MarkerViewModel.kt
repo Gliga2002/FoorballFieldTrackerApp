@@ -39,7 +39,7 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
 
     var filteredName by mutableStateOf("")
     var filteredSelectedOption by mutableStateOf("Any Type")
-    var filteredRadius by mutableStateOf(0)
+    var filteredRadius by mutableStateOf<Int?>(null)
     var dateRange by mutableStateOf("")
 
     // Funkcija za resetovanje stanja
@@ -107,7 +107,7 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         }
     }
 
-    fun applyFilters(currentUserLocationData: LocationData, cb: (Boolean) -> Unit) {
+    fun applyFilters(currentUserLocationData: LocationData?, cb: (Boolean) -> Unit) {
 
         viewModelScope.launch {
             markerRepository.applyFilters(callback = cb,filteredName, filteredSelectedOption, dateRange, filteredRadius, currentUserLocationData)

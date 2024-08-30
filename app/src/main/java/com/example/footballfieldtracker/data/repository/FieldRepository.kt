@@ -101,7 +101,6 @@ class FieldRepository(
             changeAuthorScore(5, true)
 
             // Ažurirajte reviewCount i avgRating u dokumentu fieldId
-            // TODO: NISI KORISTION SUSPEND FUNCTION VEC ONO ADDONSUCCESS
             updateFieldStats(
                 reviewCount = selectedField.value!!.reviews.size,
                 reviews = _selectedField.value!!.reviews
@@ -195,6 +194,7 @@ class FieldRepository(
 
 
     // Todo: ne valja nista, ali zato jer si ga ti cuvao kao niz stringova a on je kao novu collection tako si i ti trebao, za array nemas update funkciju pa je teze
+    // Todo: on je drzao reviews  kao collection u marker field, a ti kao niz, dosta menja, mnogo je lepsa sintaksa jer za array imas samo funkcije za dodavanje i uklanjanje, nemas update
 
     // Todo: IMAS DVA NACINA SA ASYN OPERACTION OVO SA CB FUNKCIJOM ADDONSUCCESSLISTENER LI SA AWAIT
 //        // Todo: Da si koristion addonsucces listener ne bi bila suspend function i ne bi ti trebala courtine, istrazi

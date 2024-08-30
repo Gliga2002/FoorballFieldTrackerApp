@@ -35,7 +35,7 @@ import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 @Composable
 fun FilterFieldDialog(
     context: Context,
-    currentUserLocation: LocationData,
+    currentUserLocation: LocationData?,
     markerViewModel: MarkerViewModel,
     onDismiss: () -> Unit,
 ) {
@@ -109,16 +109,25 @@ fun FilterFieldDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-         
-                // Todo: Ovo da ne prikazes ako nije dozvolio lokaciju!!
+
                 // Radius slider
-                Text("Radius: ${markerViewModel.filteredRadius} km")
-                Slider(
-                    value = markerViewModel.filteredRadius.toFloat(),
-                    onValueChange = { markerViewModel.filteredRadius = it.toInt() },
-                    valueRange = 0f..100f,
-                    steps = 5 // Number of steps in the slider
-                )
+                // Prikazi ga samo ako je odobrena lokacija
+                if (currentUserLocation != null) {
+
+                    // Koristimo ?: operator da se postavi podrazumevana vrednost ako je filteredRadius null
+                    val currentRadius = markerViewModel.filteredRadius ?: 0
+
+                    Text("Radius: $currentRadius km")
+                    Slider(
+                        value = currentRadius.toFloat(),
+                        onValueChange = { markerViewModel.filteredRadius = it.toInt() },
+                        valueRange = 0f..100f,
+                        steps = 5 // Number of steps in the slider
+                    )
+                } else {
+                    markerViewModel.filteredRadius = null
+                }
+
 
                 Spacer(modifier = Modifier.height(8.dp))
                 

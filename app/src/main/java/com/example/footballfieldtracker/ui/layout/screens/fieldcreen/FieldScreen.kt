@@ -62,11 +62,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
-// Todo: Navigiraj se ka toj lokaciji na mapi
-// Todo: Dodaj da imas horizontalne slike
 // Todo: Dodaj launcher icon
-// Todo: Gledaj na <- da se navigiras ka tom markeru
+// Todo: Navigiraj se ka toj lokaciji na mapi (optional)
+
+
 @Composable
 fun FieldScreen(
     navController: NavController,
@@ -263,11 +262,13 @@ fun FieldReview(
             }
 
             // Comment text
-            Text(
-                text = review.text,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center
-            )
+            if (review.text.isNotEmpty()) {
+                Text(
+                    text = review.text,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             // Heart icon and like count
             Row(

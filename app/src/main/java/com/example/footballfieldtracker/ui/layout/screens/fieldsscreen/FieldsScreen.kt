@@ -64,7 +64,8 @@ fun FieldsScreen(
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
     fieldViewModel: FieldViewModel,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier
+) {
 
     val context = LocalContext.current
 
@@ -80,39 +81,43 @@ fun FieldsScreen(
             val markersToDisplay =
                 if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
             items(markersToDisplay) { marker ->
-                FieldCard(field = marker, navController = navController, fieldViewModel = fieldViewModel)
+                FieldCard(
+                    field = marker,
+                    navController = navController,
+                    fieldViewModel = fieldViewModel
+                )
             }
         }
 
-        if (isFilteredDialogOpen && currentUserLocation != null) {
+        if (isFilteredDialogOpen) {
             FilterFieldDialog(
                 context = context,
-                currentUserLocation = currentUserLocation!!,
+                currentUserLocation = currentUserLocation,
                 markerViewModel = markerViewModel,
                 onDismiss = { isFilteredDialogOpen = false }
             )
         }
 
-        if (currentUserLocation != null) {
-            Button(
-                onClick = { isFilteredDialogOpen = true },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .size(56.dp), // Set the size to be circular
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 20.dp
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(10.dp) // No extra padding inside the button
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search, // Replace with your desired icon
-                    contentDescription = "Filter",
-                    tint = Color.White // Adjust icon color if needed
-                )
-            }
+
+        Button(
+            onClick = { isFilteredDialogOpen = true },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+                .size(56.dp), // Set the size to be circular
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 20.dp
+            ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(10.dp) // No extra padding inside the button
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search, // Replace with your desired icon
+                contentDescription = "Filter",
+                tint = Color.White // Adjust icon color if needed
+            )
         }
+
 
         // Kad sam ovo stavio inzad google map nije htelo da se prikaze a kad sam ovde stavio hoce!!
         if (filteredMarkers.isNotEmpty()) {
@@ -120,7 +125,7 @@ fun FieldsScreen(
                 onClick = { markerViewModel.removeFilters() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    // Todo: bljak
+                    // Todo: Smisli ako mozes bolji nacin
                     .padding(
                         top = 16.dp,
                         bottom = 24.dp,
@@ -140,7 +145,6 @@ fun FieldsScreen(
 }
 
 
-
 @Composable
 fun FieldCard(
     field: Field,
@@ -155,102 +159,102 @@ fun FieldCard(
 
 
 
-   Box(
-       modifier = modifier.padding(12.dp)
-   ) {
-       Card(
-           modifier = modifier.clickable {
-               fieldViewModel.setCurrentFieldState(field)
-               navController.navigate(Screens.Field.name)
-           }
-       ) {
-           Column(
-               modifier = Modifier
-                   .animateContentSize(
-                       animationSpec = spring(
-                           dampingRatio = Spring.DampingRatioNoBouncy,
-                           stiffness = Spring.StiffnessMedium
-                       )
-                   )
-           ) {
-               Row(
-                   modifier = Modifier
-                       .fillMaxWidth()
-                       .padding(8.dp)
-               ) {
-                   val painter = rememberAsyncImagePainter(field.photo)
-                   Image(
-                       modifier = modifier
-                           .size(64.dp)
-                           .padding(8.dp)
-                           .clip(MaterialTheme.shapes.small),
-                       contentScale = ContentScale.Crop,
-                       painter = painter,
+    Box(
+        modifier = modifier.padding(12.dp)
+    ) {
+        Card(
+            modifier = modifier.clickable {
+                fieldViewModel.setCurrentFieldState(field)
+                navController.navigate(Screens.Field.name)
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    val painter = rememberAsyncImagePainter(field.photo)
+                    Image(
+                        modifier = modifier
+                            .size(64.dp)
+                            .padding(8.dp)
+                            .clip(MaterialTheme.shapes.small),
+                        contentScale = ContentScale.Crop,
+                        painter = painter,
 
-                       // Content Description is not needed here - image is decorative, and setting a null content
-                       // description allows accessibility services to skip this element during navigation.
+                        // Content Description is not needed here - image is decorative, and setting a null content
+                        // description allows accessibility services to skip this element during navigation.
 
-                       contentDescription = null
-                   )
-                   Column(modifier = modifier) {
-                       Text(
-                           text = field.name,
-                           style = MaterialTheme.typography.displayMedium,
-                           modifier = Modifier.padding(top = 8.dp)
-                       )
-                       Text(
+                        contentDescription = null
+                    )
+                    Column(modifier = modifier) {
+                        Text(
+                            text = field.name,
+                            style = MaterialTheme.typography.displayMedium,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        Text(
 
-                           text = formattedAddress,
-                           style = MaterialTheme.typography.bodyLarge
-                       )
-                   }
+                            text = formattedAddress,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
 
-                   Row(
-                       modifier = modifier
-                           .padding(start = 0.dp, top = 0.dp, end = 24.dp, bottom = 0.dp),
-                       horizontalArrangement = Arrangement.Center,
-                       verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = modifier
+                            .padding(start = 0.dp, top = 0.dp, end = 24.dp, bottom = 0.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
 
-                   ) {
-                       Text(text = "Rating: ${field.avgRating} (Reviews: ${field.reviewCount})")
-                   }
-
-
-               }
-               if (expanded) {
-                   Row(
-                       modifier = modifier.padding(8.dp)
-                   ) {
-                       Text(
-                           // ovo sam menjao
-                           text = "by ${field.author}",
-                           style = MaterialTheme.typography.labelSmall,
-                           modifier = Modifier.padding(horizontal = 8.dp)
-                       )
+                    ) {
+                        Text(text = "Rating: ${field.avgRating} (Reviews: ${field.reviewCount})")
+                    }
 
 
-                       Text(
-                           text = "at ${formattedDate}",
-                           style = MaterialTheme.typography.bodyLarge
-                       )
+                }
+                if (expanded) {
+                    Row(
+                        modifier = modifier.padding(8.dp)
+                    ) {
+                        Text(
+                            // ovo sam menjao
+                            text = "by ${field.author}",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
 
-                   }
-               }
-           }
-       }
-       IconButton(
-           onClick = {expanded = !expanded},
-           modifier = Modifier
-               .align(Alignment.TopEnd)
-       ) {
-           Icon(
-               imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-               contentDescription = "Expading Icon",
-               tint = MaterialTheme.colorScheme.primary
-           )
-       }
 
-   }
+                        Text(
+                            text = "at ${formattedDate}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                    }
+                }
+            }
+        }
+        IconButton(
+            onClick = { expanded = !expanded },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+        ) {
+            Icon(
+                imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                contentDescription = "Expading Icon",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+    }
 }
 
 fun formatDate(timestamp: Timestamp): String {

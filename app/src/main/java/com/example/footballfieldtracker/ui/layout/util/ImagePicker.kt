@@ -29,7 +29,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 @Composable
-fun ProfileImage(imageUrl: Uri?, onGalleryChange: (Uri) -> Unit) {
+fun ImagePicker(imageUrl: Uri?, isEnabled: Boolean = true, onGalleryChange: (Uri) -> Unit) {
     val color = MaterialTheme.colorScheme
 
     val launcher = rememberLauncherForActivityResult(
@@ -64,6 +64,7 @@ fun ProfileImage(imageUrl: Uri?, onGalleryChange: (Uri) -> Unit) {
         }
         IconButton(
             onClick = { launcher.launch("image/*") },
+            enabled = isEnabled,
             modifier = Modifier
                 .size(35.dp)
                 .padding(2.dp)

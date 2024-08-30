@@ -33,7 +33,7 @@ import com.google.android.gms.location.LocationServices
 
 class MainActivity : ComponentActivity() {
     // Iako se Application class kreira pre Activity, ti nisi postovao lyfecyle pristupanja resurima  tokom kreiranj, i izgleda da je tokom kompliacije ili izvrsenja, prvo pokusao da pristupi Application pre nego sto je on uopste kreiran
-    // Todo: 1 greska je bila jer si pristupao container pre nego sto je on bio kreira, a ovim nacinom pristupas tek kada treba, ne radis ti to eksplicitno (!!!!pristupio si application container globaly, a trebao si sa lateinit!!!)
+    //  greska je bila jer si pristupao container pre nego sto je on bio kreira, a ovim nacinom pristupas tek kada treba, ne radis ti to eksplicitno (!!!!pristupio si application container globaly, a trebao si sa lateinit!!!)
 
     private val loginViewModel: LoginViewModel by viewModels {
         LoginViewModelFactory((application as MainApplication).container.userRepository)
@@ -44,14 +44,13 @@ class MainActivity : ComponentActivity() {
     }
 
     // nije htelo da radi jer je lazy, mora ga koristim dosta sam izgubio vreme seti se
-    // Todo: 1 nastavak Lazy Initialization: Ako koristite by viewModels() delegat, ViewModel se inicijalizuje automatski kada je potreban. Ako se ViewModel ne koristi, možda se neće inicijalizovati.
+    //  1 nastavak Lazy Initialization: Ako koristite by viewModels() delegat, ViewModel se inicijalizuje automatski kada je potreban. Ako se ViewModel ne koristi, možda se neće inicijalizovati.
     private val markerViewModel: MarkerViewModel by viewModels {
         MarkerViewModelFactory((application as MainApplication).container.markerRepository)
     }
 
     private val fieldViewModel: FieldViewModel by viewModels {
         FieldViewModelFactory(
-            // markerRepository mi ne treba to izbris
             fieldRepository = (application as MainApplication).container.fieldRepository)
     }
 
@@ -69,7 +68,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Todo: ili stavi ovde, ili sa lazy gore, nemoj nista da init pre ovog lyfecile, stavi onda lateinit
+        //  ili stavi ovde, ili sa lazy gore, nemoj nista da init pre ovog lyfecile, stavi onda lateinit
         val defaultnearbyfieldscontroller = object : NearbyFieldsDetectionController {
 
             @RequiresApi(Build.VERSION_CODES.O)
@@ -80,7 +79,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Todo: istrazi opet za service i razlika izmedju stopService i stopForegroundService
+            // Todo: Istrazi opet za service i razlika izmedju stopService i stopForegroundService, pogledaj opet onog
             @RequiresApi(Build.VERSION_CODES.O)
             override fun stopNearbyFieldsDetectionService() {
                 Intent(applicationContext, NearbyFieldsDetection::class.java).apply {

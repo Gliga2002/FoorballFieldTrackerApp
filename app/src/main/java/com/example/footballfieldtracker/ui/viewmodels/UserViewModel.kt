@@ -20,35 +20,34 @@ class UserViewModel(
     private val locationClient: LocationClient
 ) : ViewModel() {
 
-    private val _loading = MutableStateFlow(true)
-    var loading: StateFlow<Boolean> = _loading
 
 
     val allUsers: StateFlow<List<User>> = userRepository.allUsers
 
     val currentUser: StateFlow<User?> = userRepository.currentUser
 
-
     val currentUserLocation: StateFlow<LocationData?> = userRepository.currentUserLocation
 
 
     init {
+        Log.i("CurrentUserViewModel", "Ovde")
         loadCurrentUser()
         loadAllUsers()
     }
 
+    fun isUserLoggedIn() : Boolean {
+       return userRepository.isUserLoggedIn()
+    }
+
     fun loadCurrentUser() {
         viewModelScope.launch {
+            Log.i("CurrentUserViewModel", "Ovde")
             userRepository.startObservingUser()
             // ne moze ovako on je to sa cb, ili napravi onu funkciju da bude await ili sa cb
-
 
         }
     }
 
-    fun loadingFinishes() {
-        _loading.value = false
-    }
 
     // Dodao
     fun loadAllUsers() {

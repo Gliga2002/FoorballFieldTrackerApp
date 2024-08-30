@@ -42,16 +42,17 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
     }
 
     fun registerUser(
-        email: String,
-        password: String,
-        confirmPassword: String,
-        username: String,
-        firstName: String,
-        lastName: String,
-        phoneNumber: String,
-        imageUri: Uri?,
         callback: (Boolean, String?) -> Unit
     ) {
+        if (username.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
+            callback(false, "Molimo popunite sva polja")
+            return
+        }
+
+        if (!isValidPhoneNumber(phoneNumber)) {
+            callback(false, "Broj telefona nije u validnom formatu")
+            return
+        }
         // Proveri da li e-mail ima validan format
         if (!isValidEmail(email)) {
             // Obavestite korisnika o nevažećem e-mailu
@@ -91,7 +92,9 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
                 imageUri
             ) { success ->
                 if (success) {
-                    callback(success, "Uspesno ste se registrovali")
+                    callback(true, "Uspesno ste se registrovali")
+                } else {
+                    callback(false, "Neuspesna registracija")
                 }
 
             }
@@ -126,4 +129,10 @@ private fun doPasswordsMatch(password: String, confirmPassword: String): Boolean
 }
 private fun isImageUriValid(uri: Uri?): Boolean {
     return uri != null
+}
+
+private fun isValidPhoneNumber(phoneNumber: String): Boolean {
+    // Regularni izraz za validaciju broja telefona
+    val regex = "^((\\+\\d{1,3}(-| )?)?(\\(?\\d{3}\\)?[-. ]?)?\\d{3}[-. ]?\\d{4})\$".toRegex()
+    return regex.matches(phoneNumber)
 }

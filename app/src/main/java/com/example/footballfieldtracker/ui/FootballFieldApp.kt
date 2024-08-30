@@ -17,7 +17,10 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -65,12 +68,13 @@ fun FootballFieldApp(
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 
 ) {
-    // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
     val currentUser by userViewModel.currentUser.collectAsState()
-    val isLoading by userViewModel.loading.collectAsState()
+    var isLoading by remember { mutableStateOf(true) }
+    // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
 
-    if (currentUser != null) {
-        userViewModel.loadingFinishes()
+    Log.i("FootballFieldApp", userViewModel.isUserLoggedIn().toString())
+    if (!userViewModel.isUserLoggedIn() || currentUser != null) {
+        isLoading = false
     }
 
 
@@ -82,6 +86,8 @@ fun FootballFieldApp(
             CircularProgressIndicator()
         }
     } else {
+
+        Log.d("CurrentUser2", currentUser.toString())
         val navController: NavHostController = rememberNavController()
         val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val coroutineScope: CoroutineScope = rememberCoroutineScope()

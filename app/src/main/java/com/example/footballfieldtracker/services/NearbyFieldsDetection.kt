@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 class NearbyFieldsDetection : Service() {
 
     // OVO JE NAJVECA GRESKA KOJU SAM IMAO I SA KOJOM SAM SE NAJVISE MUCIO. Desi se kada zelim pristupati application pre inicjalizacije!!
-    // Todo: !!!Kada imas lyfecycle NIKAD NEMOJ NISTA DA INIT PRE LIFYCECLY METODA, STAVLJAJ LATEINIT, ZATO IMAS TE GRESKE, i u servise i u activity. U onCreate to init!!!
+    // !!!Kada imas lyfecycle NIKAD NEMOJ NISTA DA INIT PRE LIFYCECLY METODA, STAVLJAJ LATEINIT, ZATO IMAS TE GRESKE, i u servise i u activity. U onCreate to init!!!
 
     private lateinit var app: MainApplication
     private lateinit var currentUserLocation: StateFlow<LocationData?>
@@ -129,8 +129,6 @@ class NearbyFieldsDetection : Service() {
         // Proverite da li je trenutna lokacija unutar radijusa od 10km od nekog markera
         val userLocation = currentUserLocation.value ?: return
         markers.forEach { marker ->
-            // Todo: userLocation ti je type LocationData, a marker ima proprty latitude i longitude
-            // Todo: hocu da imas to u vidi kad zoves calculateDistance, izmeni tu funkciju
             val markerLocation = LocationData(marker.latitude, marker.longitude)
             val distance = calculateDistance(userLocation, markerLocation)
             if (distance < 10_000) { // 10km

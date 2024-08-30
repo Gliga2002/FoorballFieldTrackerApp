@@ -69,7 +69,7 @@ fun DrawerContent(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp)
-            .background(Color(0xFF3DDC84)),
+            .background(Color(0xFFd2e8d4)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(

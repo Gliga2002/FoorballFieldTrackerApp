@@ -42,7 +42,7 @@ fun LeadboardScreen(userViewModel: UserViewModel) {
     }
 }
 
-// Todo: Svuda u aplikaciji da lepo pass modifier kao sto je predlozeno
+// Todo: Svuda u aplikaciji da lepo pass modifier kao sto je predlozeno, znaci svaka composable ima modifier i prosledjuje ga prvoj child (obicno layout)
 @Composable
 fun UserCard(user: User) {
     Card(
