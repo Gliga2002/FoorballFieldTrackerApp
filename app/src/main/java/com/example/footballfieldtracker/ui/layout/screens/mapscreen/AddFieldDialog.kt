@@ -132,7 +132,7 @@ fun AddFieldDialog(
         confirmButton = {
             Button(onClick = {
                 isLoading = true
-                markerViewModel.saveData { success, toastMsg ->
+                markerViewModel.createMarker { success, toastMsg ->
                     isLoading = false
                     if (success) {
                         markerViewModel.resetState()

@@ -30,23 +30,23 @@ class MarkerRepository(
     private val _markers = MutableStateFlow<List<Field>>(emptyList())
     val markers: StateFlow<List<Field>> = _markers
 
+    private var markersListenerRegistration: ListenerRegistration? = null
+
 
     private val _filteredMarkers = MutableStateFlow<List<Field>>(emptyList())
     val filteredMarkers: StateFlow<List<Field>> = _filteredMarkers.asStateFlow()
 
 
-    private var markersListenerRegistration: ListenerRegistration? = null
-
     init {
         fetchMarkers()
     }
 
-    // Funkcija za preuzimanje markera iz Firestore
+
     private fun fetchMarkers() {
         val markersCollectionRef = firestore.collection("markers")
 
         // Dodajte listener za promene u kolekciji
-        markersCollectionRef.addSnapshotListener { snapshot, exception ->
+        markersListenerRegistration = markersCollectionRef.addSnapshotListener { snapshot, exception ->
             if (exception != null) {
                 // Handle error
                 return@addSnapshotListener
@@ -69,58 +69,69 @@ class MarkerRepository(
     }
 
 
-        // Funkcija za dodavanje LocationData u kolekciju markers s automatski generisanim ID-om
-        suspend fun addLocationData(
-            name: String,
-            type: String,
-            address: String,
-            lng: Double,
-            lat: Double,
-            photo: Uri?
-        ) {
-            // ovo currentTime mozes i da passujes
-            val currentTime = Timestamp.now()
-            val userId = auth.currentUser!!.uid
+    // Funkcija za dodavanje LocationData u kolekciju markers s automatski generisanim ID-om
+    suspend fun addLocationData(
+        name: String,
+        type: String,
+        address: String,
+        lng: Double,
+        lat: Double,
+        photo: Uri?,
+        currentTime: Timestamp
+    ) {
+        val userId = auth.currentUser!!.uid
 
-            try {
-                // ovo sam menjao
-                val userRef = firestore.collection("users").document(userId).get().await()
-                val user = userRef.toObject(User::class.java) ?: User() // Ako ne postoji korisnik, koristi praznog User-a
+        try {
 
-                var fieldData = Field("", name, type, address, lng, lat, mutableListOf(),0.0, 0,"", currentTime, user.username)
-                // Dodaj dokument i automatski generiši ID
-                val documentRef = firestore.collection("markers").add(fieldData).await()
+            val userRef = firestore.collection("users").document(userId).get().await()
+            val user = userRef.toObject(User::class.java)
+                ?: User() // Ako ne postoji korisnik, koristi praznog User-a
 
-                // Uzmi generisani ID
-                val fieldId = documentRef.id
+            val fieldData = Field(
+                "",
+                name,
+                type,
+                address,
+                lng,
+                lat,
+                mutableListOf(),
+                0.0,
+                0,
+                "",
+                currentTime,
+                user.username
+            )
+            // Dodaj dokument i automatski generiši ID
+            val documentRef = firestore.collection("markers").add(fieldData).await()
 
-                // Ako postoji slika, sačuvaj je u Firebase Storage
-                if (photo != null) {
-                    val fieldPicRef = storage.getReference("field_pictures/$fieldId")
-                    fieldPicRef.putFile(photo).await()  // Čeka da se slika upload-uje
-                    val downloadUri = fieldPicRef.downloadUrl.await()  // Čeka da se preuzme URL slike
+            // Uzmi generisani ID
+            val fieldId = documentRef.id
 
-                    // Ažuriraj Firestore dokument sa URL-om slike i ID-jem
-                    documentRef.update(
-                        mapOf(
-                            "photo" to downloadUri.toString(),
-                            "id" to fieldId
-                        )
-                    ).await()
-                } else {
-                    // Ako slika nije dostupna, samo ažuriraj ID
-                    documentRef.update("id", fieldId).await()
-                }
+            // Ako postoji slika, sačuvaj je u Firebase Storage
+            if (photo != null) {
+                val fieldPicRef = storage.getReference("field_pictures/$fieldId")
+                fieldPicRef.putFile(photo).await()  // Čeka da se slika upload-uje
+                val downloadUri = fieldPicRef.downloadUrl.await()  // Čeka da se preuzme URL slike
 
-                // Ažuriraj score korisnika
-                val userDocRef = firestore.collection("users").document(userId)
-                userDocRef.update("score", FieldValue.increment(20)).await()
-
-                Log.d("MarkerRepository", "LocationData successfully written with ID: $fieldId")
-            } catch (e: Exception) {
-                Log.e("MarkerRepository", "Error writing LocationData", e)
+                // Ažuriraj Firestore dokument sa URL-om slike i ID-jem
+                documentRef.update(
+                    mapOf(
+                        "photo" to downloadUri.toString(),
+                        "id" to fieldId
+                    )
+                ).await()
+            } else {
+                // Ako slika nije dostupna, samo ažuriraj ID
+                documentRef.update("id", fieldId).await()
             }
+
+            // Ažuriraj score korisnika
+            val userDocRef = firestore.collection("users").document(userId)
+            userDocRef.update("score", FieldValue.increment(20)).await()
+        } catch (e: Exception) {
+            Log.e("MarkerRepository", "Error writing LocationData", e)
         }
+    }
 
     fun applyFilters(
         callback: (Boolean) -> Unit,
@@ -132,13 +143,9 @@ class MarkerRepository(
     ) {
         val filteredList = _markers.value.filter { location ->
 
-            // ovo sam menjao
             var authorMatch = location.author.contains(author, ignoreCase = true)
             var typeMatch = location.type.contains(type, ignoreCase = true)
             val dateMatch = date.isEmpty() || isDateInRange(location.timeCreated.toDate(), date)
-
-            // Log the match criteria for each marker
-            Log.i("FilterDebug", "Checking marker: ${location.name}")
 
             if (author.isBlank()) {
                 authorMatch = true
@@ -147,9 +154,8 @@ class MarkerRepository(
                 typeMatch = true
             }
 
-            Log.i("FilterDebug", "Author match: $authorMatch, Type match: $typeMatch, Date match: $dateMatch")
 
-            var withinRadius: Boolean
+            val withinRadius: Boolean
             if (radius != null && currentLoc != null) {
                 // Check if the marker is within the specified radius
                 val distance = calculateDistance(
@@ -159,27 +165,18 @@ class MarkerRepository(
                     location.longitude
                 )
                 withinRadius = distance < radius
-                // Log distance and radius information
-                Log.i("FilterDebug", "Distance to marker: $distance km, Radius: $radius km, Within radius: $withinRadius")
 
             } else {
                 withinRadius = true
-                Log.i("FilterDebug", "Ovde")
-            }
 
+            }
 
 
             authorMatch && typeMatch && dateMatch && withinRadius
         }
-        // Log the count and details of filtered markers
-        Log.i("FilterDebug", "Filtered markers count: ${filteredList.size}")
-        filteredList.forEach { marker ->
-            Log.i("FilterDebug", "Filtered marker: ${marker.name}, Location: (${marker.latitude}, ${marker.longitude})")
 
 
-        }
-
-        if (filteredList.size > 0) {
+        if (filteredList.isNotEmpty()) {
             callback(true)
             _filteredMarkers.value = filteredList
         } else {
@@ -189,19 +186,15 @@ class MarkerRepository(
     }
 
 
-    // mogao si sa compareTo
+    // Mogao si i sa CompareTo
     private fun isDateInRange(locationDate: Date, filterDate: String): Boolean {
         val dateFormat = SimpleDateFormat("dd.MM.yyyy.", Locale.US)
         val filterDateParts = filterDate.split(" - ")
-
-        Log.i("DateFormat", filterDateParts[0])
-        Log.i("DateFormat", filterDateParts[1])
 
         try {
             if (filterDateParts.size == 2) {
                 val startDate = dateFormat.parse(filterDateParts[0])
                 val endDate = dateFormat.parse(filterDateParts[1])
-
 
 
                 if (startDate != null && endDate != null) {
@@ -228,7 +221,9 @@ class MarkerRepository(
 
         val dLat = lat2Rad - lat1Rad
         val dLon = lon2Rad - lon1Rad
-        val a = Math.sin(dLat / 2).pow(2) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2).pow(2)
+        val a =
+            Math.sin(dLat / 2).pow(2) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2)
+                .pow(2)
         val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
         return radiusOfEarth * c
     }

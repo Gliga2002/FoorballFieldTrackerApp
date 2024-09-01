@@ -1,9 +1,6 @@
 package com.example.footballfieldtracker.ui.layout.screens.leadboardscreen
 
 import android.util.Log
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,14 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.footballfieldtracker.data.model.User
-import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldCard
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
 
 @Composable
-fun LeadboardScreen(userViewModel: UserViewModel) {
+fun LeaderboardScreen(userViewModel: UserViewModel) {
     val users by userViewModel.allUsers.collectAsState(emptyList())
 
     LazyColumn {
@@ -42,7 +37,7 @@ fun LeadboardScreen(userViewModel: UserViewModel) {
     }
 }
 
-// Todo: Svuda u aplikaciji da lepo pass modifier kao sto je predlozeno, znaci svaka composable ima modifier i prosledjuje ga prvoj child (obicno layout)
+
 @Composable
 fun UserCard(user: User) {
     Card(

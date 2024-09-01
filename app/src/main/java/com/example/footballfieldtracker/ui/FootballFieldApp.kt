@@ -2,10 +2,12 @@ package com.example.footballfieldtracker.ui
 
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
@@ -13,6 +15,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,17 +26,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.layout.drawer.DrawerContent
-import com.example.footballfieldtracker.ui.layout.drawer.menus
 import com.example.footballfieldtracker.ui.layout.screens.fieldcreen.FieldScreen
 import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.FieldsScreen
-import com.example.footballfieldtracker.ui.layout.screens.leadboardscreen.LeadboardScreen
+import com.example.footballfieldtracker.ui.layout.screens.leadboardscreen.LeaderboardScreen
 import com.example.footballfieldtracker.ui.layout.screens.loginscreen.LoginScreen
 import com.example.footballfieldtracker.ui.layout.screens.mapscreen.MapScreen
 import com.example.footballfieldtracker.ui.layout.screens.registerscreen.RegisterScreen
@@ -51,7 +53,7 @@ enum class Screens {
     Login,
     Register,
     GoogleMap,
-    Leadboard,
+    Leaderboard,
     Fields,
     Field
 }
@@ -70,9 +72,8 @@ fun FootballFieldApp(
 ) {
     val currentUser by userViewModel.currentUser.collectAsState()
     var isLoading by remember { mutableStateOf(true) }
-    // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
 
-    Log.i("FootballFieldApp", userViewModel.isUserLoggedIn().toString())
+    // Ovo koristim da proverim da li je korisnik ulogovan kada opet otvori aplikaciju
     if (!userViewModel.isUserLoggedIn() || currentUser != null) {
         isLoading = false
     }
@@ -83,11 +84,13 @@ fun FootballFieldApp(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(4.dp))
+                Text("Loading...")
+            }
         }
     } else {
-
-        Log.d("CurrentUser2", currentUser.toString())
         val navController: NavHostController = rememberNavController()
         val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val coroutineScope: CoroutineScope = rememberCoroutineScope()
@@ -101,7 +104,6 @@ fun FootballFieldApp(
             drawerContent = {
                 ModalDrawerSheet {
                     DrawerContent(
-                        menus = menus,
                         currentUser = currentUser,
                         onAction = { route ->
                             coroutineScope.launch {
@@ -120,11 +122,11 @@ fun FootballFieldApp(
             Scaffold(
                 topBar = {
                     CustomAppBar(
-                        drawerState,
-                        loginViewModel,
-                        fieldViewModel,
-                        markerViewModel,
-                        navController
+                        drawerState = drawerState,
+                        navController = navController,
+                        selectedFieldName = fieldViewModel.selectedFieldState.name,
+                        loginViewModel = loginViewModel,
+                        removeFilter = { markerViewModel.removeFilters() },
                     )
                 },
                 content = { paddingValues ->
@@ -150,13 +152,13 @@ fun FootballFieldApp(
                                 navController = navController,
                                 userViewModel = userViewModel,
                                 markerViewModel = markerViewModel,
-                                fieldViewModel = fieldViewModel,
+                                selectField = { fieldViewModel.setCurrentFieldState(it)},
                                 defaultnearbyfieldcontroller = defaultnearbyfieldcontroller
                             )
                         }
 
-                        composable(Screens.Leadboard.name) {
-                            LeadboardScreen(
+                        composable(Screens.Leaderboard.name) {
+                            LeaderboardScreen(
                                 userViewModel = userViewModel
                             )
                         }
@@ -166,13 +168,12 @@ fun FootballFieldApp(
                                 navController = navController,
                                 userViewModel = userViewModel,
                                 markerViewModel = markerViewModel,
-                                fieldViewModel = fieldViewModel
+                                selectField = { fieldViewModel.setCurrentFieldState(it)}
                             )
                         }
 
                         composable(Screens.Field.name) {
                             FieldScreen(
-                                navController = navController,
                                 userViewModel = userViewModel,
                                 fieldViewModel = fieldViewModel
                             )

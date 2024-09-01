@@ -1,8 +1,8 @@
 package com.example.footballfieldtracker.data.model
 
-// Imao si dve greske sa firoste, nisi provide default argument i nisi lepo mapirao iz baze u class (toObject)
+
 data class User(
-    // id je uuid, necu da mi on sam generise
+    // id je uuid
     var id: String = "",
     var email: String = "",
     var username: String = "",

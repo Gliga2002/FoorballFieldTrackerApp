@@ -1,7 +1,6 @@
 package com.example.footballfieldtracker.ui.layout.util
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +17,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.footballfieldtracker.data.model.LocationData
-import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,7 +119,7 @@ fun FilterFieldDialog(
                         value = currentRadius.toFloat(),
                         onValueChange = { markerViewModel.filteredRadius = it.toInt() },
                         valueRange = 0f..100f,
-                        steps = 5 // Number of steps in the slider
+                        steps = 5
                     )
                 } else {
                     markerViewModel.filteredRadius = null
@@ -136,7 +133,7 @@ fun FilterFieldDialog(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "${markerViewModel.dateRange}")
+                    Text(text = markerViewModel.dateRange)
 
                     Spacer(modifier = Modifier.height(4.dp))
 

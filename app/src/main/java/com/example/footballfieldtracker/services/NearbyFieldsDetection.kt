@@ -1,6 +1,5 @@
 package com.example.footballfieldtracker.services
 
-import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -27,16 +26,13 @@ import kotlinx.coroutines.flow.StateFlow
 
 class NearbyFieldsDetection : Service() {
 
-    // OVO JE NAJVECA GRESKA KOJU SAM IMAO I SA KOJOM SAM SE NAJVISE MUCIO. Desi se kada zelim pristupati application pre inicjalizacije!!
-    // !!!Kada imas lyfecycle NIKAD NEMOJ NISTA DA INIT PRE LIFYCECLY METODA, STAVLJAJ LATEINIT, ZATO IMAS TE GRESKE, i u servise i u activity. U onCreate to init!!!
-
+    // Nemoj nista da inicijalizujes, pre onCreate!! Koristi lateinit
     private lateinit var app: MainApplication
     private lateinit var currentUserLocation: StateFlow<LocationData?>
     private lateinit var firestore: FirebaseFirestore
     // ovo ovde je okej
     private lateinit var notification: NotificationCompat.Builder
 
-    // e nemoj odma da pristupas resursima ovako pogledaj ServisiLab isao je sa lateinit pa u on create inicijalizovao
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -86,13 +82,8 @@ class NearbyFieldsDetection : Service() {
 
 
 
-
-
         startForeground(1, notification.build())
         observeMarkers()
-
-
-
 
 
     }
@@ -111,6 +102,7 @@ class NearbyFieldsDetection : Service() {
 
     private fun observeMarkers() {
         // Pretplata na promene u Firebase kolekciji
+        // Mogo si i iz repository, imas markere live, ili ovako
         firestore.collection("markers")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
@@ -149,7 +141,6 @@ class NearbyFieldsDetection : Service() {
 
 
     private fun updateNotification(message: String, notification: NotificationCompat.Builder) {
-        // dva side effecta imas, ispravi kad mozes, radi i ovako ali zbog preglednosti
             notification
                 .setContentText(message)
                 .setSmallIcon(R.drawable.visibility_24)
@@ -159,7 +150,7 @@ class NearbyFieldsDetection : Service() {
                 )
                 .setOngoing(true)
 
-        var notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(1, notification.build())
     }
 

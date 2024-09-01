@@ -1,6 +1,5 @@
 package com.example.footballfieldtracker.ui.layout.screens.fieldcreen
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,26 +48,16 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
-import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.data.model.Review
-import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.extractAddressPart
-import com.example.footballfieldtracker.ui.layout.screens.fieldsscreen.formatDate
+import com.example.footballfieldtracker.ui.layout.util.extractAddressPart
+import com.example.footballfieldtracker.ui.layout.util.formatDate
 import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
-import com.google.firebase.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-// Todo: Dodaj launcher icon
-// Todo: Navigiraj se ka toj lokaciji na mapi (optional)
 
 
 @Composable
 fun FieldScreen(
-    navController: NavController,
     userViewModel: UserViewModel,
     fieldViewModel: FieldViewModel,
     modifier: Modifier = Modifier
@@ -172,8 +161,13 @@ fun FieldScreen(
                         currentUser?.likedReviews?.let { likedReviews ->
                             FieldReview(
                                 review = review,
-                                hasUserReviewed = likedReviews.contains(review.id),
-                                handleLikedReview = { review, isLiked -> fieldViewModel.handleLikedReviews(review, isLiked)}
+                                hasUserLikedReview = likedReviews.contains(review.id),
+                                handleLikedReview = { review, isLiked ->
+                                    fieldViewModel.handleLikedReviews(
+                                        review,
+                                        isLiked
+                                    )
+                                }
                             )
                         }
                     }
@@ -207,7 +201,7 @@ fun FieldScreen(
             ReviewDialog(
                 onDismissRequest = { isReviewDialogOpen = false },
                 fieldViewModel = fieldViewModel,
-                fieldId =  it.id
+                fieldId = it.id
             )
         }
     }
@@ -218,8 +212,9 @@ fun FieldScreen(
 @Composable
 fun FieldReview(
     review: Review,
-    hasUserReviewed: Boolean,
-    handleLikedReview: (Review, Boolean) -> Unit) {
+    hasUserLikedReview: Boolean,
+    handleLikedReview: (Review, Boolean) -> Unit
+) {
 
 
     Card(
@@ -238,7 +233,7 @@ fun FieldReview(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // "By {review.user}"
+
             Text(
                 text = "By ${review.user}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -277,12 +272,12 @@ fun FieldReview(
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 Icon(
-                    imageVector = if (hasUserReviewed) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (hasUserLikedReview) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = "Like",
-                    tint = if (hasUserReviewed) Color.Red else Color.Gray,
+                    tint = if (hasUserLikedReview) Color.Red else Color.Gray,
                     modifier = Modifier
                         .clickable {
-                            handleLikedReview(review, !hasUserReviewed)
+                            handleLikedReview(review, !hasUserLikedReview)
                         }
                         .size(24.dp)
                 )
@@ -296,22 +291,3 @@ fun FieldReview(
     }
 }
 
-// TODO: Izdvoj ovo u utility funcions
-fun formatDate(timestamp: Timestamp): String {
-    val date: Date = timestamp.toDate()
-    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    return dateFormat.format(date)
-}
-
-fun extractAddressPart(address: String): String {
-    // Podeli adresu na delove koristeći zarez kao separator
-    val parts = address.split(",")
-
-    // Ako postoji više od jednog dela, uzmi sve delove nakon prvog zareza
-    return if (parts.size > 1) {
-        // Spoji sve delove nakon prvog zareza u jedan string i ukloni nepotrebne prazne prostore
-        parts.takeLast(2).joinToString(",").trim()
-    } else {
-        ""
-    }
-}

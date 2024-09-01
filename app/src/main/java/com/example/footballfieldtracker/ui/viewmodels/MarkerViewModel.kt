@@ -1,7 +1,6 @@
 package com.example.footballfieldtracker.ui.viewmodels
 
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,10 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.data.model.LocationData
-
-import com.example.footballfieldtracker.data.model.Review
 import com.example.footballfieldtracker.data.repository.MarkerRepository
-import com.example.footballfieldtracker.data.repository.UserRepository
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +25,6 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         private set
     var lng: Double by mutableStateOf(0.0)
         private set
-    // imao sam gresku da sam napravio fju setAddress i private set imaju isti potpis
    var address: String by mutableStateOf("")
         private set
 
@@ -70,7 +65,7 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
 
 
 
-    fun saveData(
+    fun createMarker(
         callback: (Boolean, String) -> Unit
     ) {
         // Validacija
@@ -100,7 +95,8 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
                 lat = lat,
                 lng = lng,
                 address = address,
-                photo = imageUri
+                photo = imageUri,
+                currentTime =  Timestamp.now()
 
             )
             callback(true, "Successfully added marker")

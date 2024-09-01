@@ -19,6 +19,12 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 import java.util.UUID
 
+object FieldConstants {
+    const val POINTS_FOR_ADDING_REVIEW = 10
+    const val POINTS_FOR_LIKING_REVIEW = 5
+}
+
+
 class FieldRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
@@ -29,12 +35,12 @@ class FieldRepository(
     val selectedField: StateFlow<Field?> get() = _selectedField
 
 
-    private var snapshotListenerRegistration: ListenerRegistration? = null
+    private var selectedFieldListenerRegistration: ListenerRegistration? = null
 
 
     fun addFieldSnapshotListener(fieldId: String) {
         val documentReference = firestore.collection("markers").document(fieldId)
-        snapshotListenerRegistration =
+        selectedFieldListenerRegistration =
             documentReference.addSnapshotListener { snapshot, exception ->
                 if (exception != null) {
                     // Handle error
@@ -50,7 +56,7 @@ class FieldRepository(
     }
 
     fun stopListening() {
-        snapshotListenerRegistration?.remove()
+        selectedFieldListenerRegistration?.remove()
     }
 
 
@@ -85,30 +91,35 @@ class FieldRepository(
                 user = it.username,
                 rating = rating,
                 text = text,
-                likes = 0, markerId = fieldId
+                likes = 0,
+                markerId = fieldId
             )
         }
 
         try {
 
             // Dodajte recenziju u niz reviews u dokumentu fieldId
-            firestore.collection("markers")
-                .document(fieldId)
-                .update("reviews", FieldValue.arrayUnion(newReview))
-                .await()
-
-            // Ažurirajte score korisnika
-            changeAuthorScore(5, true)
+            addReviewToField(fieldId, newReview)
 
             // Ažurirajte reviewCount i avgRating u dokumentu fieldId
-            updateFieldStats(
-                reviewCount = selectedField.value!!.reviews.size,
-                reviews = _selectedField.value!!.reviews
-            )
+            val reviewCount = selectedField.value!!.reviews.size
+            val reviews = _selectedField.value!!.reviews
+            updateFieldStats(reviewCount, reviews)
+
+            // Ažurirajte score korisnika
+            changeAuthorScore(FieldConstants.POINTS_FOR_ADDING_REVIEW, true)
+
 
         } catch (e: Exception) {
-
+            // Handle errors
         }
+    }
+
+    private suspend fun addReviewToField(fieldId: String, newReview: Review?) {
+        firestore.collection("markers")
+            .document(fieldId)
+            .update("reviews", FieldValue.arrayUnion(newReview))
+            .await()
     }
 
 
@@ -118,7 +129,6 @@ class FieldRepository(
             val decimalFormat = DecimalFormat("#.00", symbols)
             val formattedAvgRating =
                 decimalFormat.format(calculateAvgRating(reviews = reviews)).toDouble()
-
 
 
             updateAvgRatingAndSizeInFirestore(formattedAvgRating, reviewCount)
@@ -174,32 +184,19 @@ class FieldRepository(
     suspend fun handleLikedReview(review: Review, isLiked: Boolean) {
 
         val currUserId = auth.currentUser!!.uid
-        if (isLiked) {
 
-            updateReviewLikes(review.id, isLiked, review.markerId)
+        updateReviewLikes(review.id, isLiked, review.markerId)
 
-            updateUserLikedReviews(currUserId, isLiked, review.id)
+        updateUserLikedReviews(currUserId, isLiked, review.id)
 
-            changeAuthorScore(5, true)
+        changeAuthorScore(FieldConstants.POINTS_FOR_LIKING_REVIEW, isLiked)
 
-        } else {
-
-            updateReviewLikes(review.id, isLiked, review.markerId)
-
-            updateUserLikedReviews(currUserId, isLiked, review.id)
-
-            changeAuthorScore(5, false)
-        }
     }
 
 
-    // Todo: ne valja nista, ali zato jer si ga ti cuvao kao niz stringova a on je kao novu collection tako si i ti trebao, za array nemas update funkciju pa je teze
-    // Todo: on je drzao reviews  kao collection u marker field, a ti kao niz, dosta menja, mnogo je lepsa sintaksa jer za array imas samo funkcije za dodavanje i uklanjanje, nemas update
 
-    // Todo: IMAS DVA NACINA SA ASYN OPERACTION OVO SA CB FUNKCIJOM ADDONSUCCESSLISTENER LI SA AWAIT
-//        // Todo: Da si koristion addonsucces listener ne bi bila suspend function i ne bi ti trebala courtine, istrazi
-
-
+    // Change review's likes
+    // imas dva nacina da hangle async operation, sa courutine/await i sa cb funkcijama
     // https://www.youtube.com/watch?v=Bthy1Dla_ws
     private suspend fun updateReviewLikes(
         reviewId: String,
@@ -260,6 +257,7 @@ class FieldRepository(
 
     }
 
+    // Add liked reviw to user's likedReviews array (if it's unliked, remove it from array)
     private suspend fun updateUserLikedReviews(
         userId: String,
         isLiked: Boolean,
@@ -274,8 +272,8 @@ class FieldRepository(
     }
 
 
-    // refaktorisi
-    suspend fun changeAuthorScore(scoreValue: Int, increase: Boolean) {
+    // Change User Score according to liked/unliked review
+    private suspend fun changeAuthorScore(scoreValue: Int, increase: Boolean) {
 
         val user = getUser(auth.currentUser!!.uid)
 
@@ -285,7 +283,8 @@ class FieldRepository(
 
             try {
                 // Pretražuje kolekciju Users za korisnika sa odgovarajućim korisničkim imenom
-                val querySnapshot = usersCollectionRef.whereEqualTo("username", user.username).get().await()
+                val querySnapshot =
+                    usersCollectionRef.whereEqualTo("username", user.username).get().await()
 
                 for (documentSnapshot in querySnapshot) {
                     val userRef = usersCollectionRef.document(documentSnapshot.id)
@@ -293,7 +292,8 @@ class FieldRepository(
 
                     if (innerDocumentSnapshot.exists()) {
                         var existingScore = innerDocumentSnapshot.getLong("score") ?: 0
-                        val newScore = if (increase) existingScore + scoreValue else existingScore - scoreValue
+                        val newScore =
+                            if (increase) existingScore + scoreValue else existingScore - scoreValue
 
                         // Ažurira score u Firestore
                         userRef.update("score", newScore).await()
@@ -306,8 +306,7 @@ class FieldRepository(
         }
     }
 
-
-    // Funkcija za dobijanje korisnika iz kolekcije
+    // Fetch user from firestore with user id (uuid)
     private suspend fun getUser(userId: String): User? {
         return try {
             val documentSnapshot = firestore

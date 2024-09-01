@@ -16,12 +16,9 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationDrawerItem
@@ -31,36 +28,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.User
 import com.example.footballfieldtracker.ui.Screens
 
 
-data class DrawerMenu(val icon: ImageVector, val title: String, val route: String)
+data class DrawerMenu(val icon: Painter, val title: String, val route: String)
 
-// moras da ih pravis sam
-val menus = arrayOf(
-    DrawerMenu(Icons.Filled.LocationOn, "Google Map", Screens.GoogleMap.name),
-    DrawerMenu(Icons.Filled.Face, "Leadboard", Screens.Leadboard.name),
-    DrawerMenu(Icons.Filled.PlayArrow, "Fields", Screens.Fields.name)
-)
 
 @Composable
 fun DrawerContent(
-    menus: Array<DrawerMenu>,
     currentUser: User?,
-    onAction: (String?) -> Unit // Jedna funkcija koja prihvata String? za razliku akcija
+    onAction: (String?) -> Unit
 ) {
 
+    val menus = arrayOf(
+        DrawerMenu(painterResource(id = R.drawable.map_24), "Google Map", Screens.GoogleMap.name),
+        DrawerMenu(painterResource(id = R.drawable.leaderboard_24), "Leaderboard", Screens.Leaderboard.name),
+        DrawerMenu(painterResource(id = R.drawable.sports_soccer_24), "Fields", Screens.Fields.name)
+    )
 
-    val name = "${currentUser?.firstName} ${currentUser?.lastName}" // Kombinujte kapitalizovana imena
+    val name = "${currentUser?.firstName} ${currentUser?.lastName}"
     val imageUrl = currentUser?.photoPath
     val userEmail = currentUser?.email
     val phoneNumber = currentUser?.phoneNumber
@@ -101,7 +99,6 @@ fun DrawerContent(
                 )
             }
         }
-        // Mozes da refactor one dve slike
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(imageUrl)
@@ -159,7 +156,7 @@ fun DrawerContent(
     menus.forEach {
         NavigationDrawerItem(
             label = { Text(text = it.title) },
-            icon = { Icon(imageVector = it.icon, contentDescription = null) },
+            icon = { Icon(painter = it.icon, contentDescription = null) },
             selected = false,
             onClick = {
                 onAction(it.route)

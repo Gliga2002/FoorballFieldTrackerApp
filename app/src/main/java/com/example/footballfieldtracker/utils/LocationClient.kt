@@ -1,4 +1,4 @@
-package com.example.locationserviceexample.utils
+package com.example.footballfieldtracker.utils
 
 import android.location.Location
 import kotlinx.coroutines.flow.Flow

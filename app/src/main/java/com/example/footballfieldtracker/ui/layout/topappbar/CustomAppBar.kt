@@ -1,10 +1,8 @@
 package com.example.footballfieldtracker.ui.layout.topappbar
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -26,20 +24,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.ui.Screens
-import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.LoginViewModel
-import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomAppBar(
     drawerState: DrawerState,
+    navController: NavHostController,
+    selectedFieldName: String,
     loginViewModel: LoginViewModel,
-    fieldViewModel: FieldViewModel,
-    markerViewModel: MarkerViewModel,
-    navController: NavHostController
-) {
+    removeFilter: () -> Unit,
+    ) {
 
     val context = LocalContext.current
 
@@ -52,16 +48,20 @@ fun CustomAppBar(
         Screens.GoogleMap.name -> "Google Map"
         Screens.Register.name -> "Register"
         Screens.Login.name -> "Login"
-        Screens.Leadboard.name -> "Leadboard"
+        Screens.Leaderboard.name -> "Leaderboard"
         Screens.Fields.name -> "Fields"
-        Screens.Field.name -> fieldViewModel.selectedFieldState.name
+        Screens.Field.name -> selectedFieldName
         else -> "Redirecting..." // Podrazumevani naslov
     }
 
     TopAppBar(
-        // ako imas vreme smisli bolje. bolje pitaj ako
         navigationIcon = {
-            if (currentRoute in listOf(Screens.GoogleMap.name, Screens.Leadboard.name, Screens.Fields.name)) {
+            if (currentRoute in listOf(
+                    Screens.GoogleMap.name,
+                    Screens.Leaderboard.name,
+                    Screens.Fields.name
+                )
+            ) {
                 IconButton(onClick = {
                     // Otvori drawer kada klikneš na ikonu
                     coroutineScope.launch {
@@ -74,7 +74,10 @@ fun CustomAppBar(
                 IconButton(onClick = {
                     navController.popBackStack()
                 }) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null
+                    )
                 }
             }
         },
@@ -113,10 +116,11 @@ fun CustomAppBar(
                     loginViewModel.signOut { success ->
                         if (success) {
                             navController.navigate(Screens.Login.name) {
-                            popUpTo(Screens.GoogleMap.name) { inclusive = true }
+                                popUpTo(Screens.GoogleMap.name) { inclusive = true }
                             }
-                            markerViewModel.removeFilters()
-                            Toast.makeText(context, "Successfully signed out", Toast.LENGTH_SHORT).show()
+                            removeFilter()
+                            Toast.makeText(context, "Successfully signed out", Toast.LENGTH_SHORT)
+                                .show()
                         } else {
                             Toast.makeText(context, "Sign out failed", Toast.LENGTH_SHORT).show()
                         }

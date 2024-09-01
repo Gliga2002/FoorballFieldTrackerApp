@@ -3,7 +3,6 @@ package com.example.footballfieldtracker.ui.layout.screens.mapscreen
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,17 +37,16 @@ import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.footballfieldtracker.MainActivity
 import com.example.footballfieldtracker.R
+import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.services.NearbyFieldsDetectionController
 import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
-import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
-import com.example.locationserviceexample.utils.hasLocationPermissions
-import com.example.locationserviceexample.utils.reverseGeocodeLocation
+import com.example.footballfieldtracker.utils.hasLocationPermissions
+import com.example.footballfieldtracker.utils.reverseGeocodeLocation
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -66,7 +64,7 @@ fun MapScreen(
     navController: NavController,
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
-    fieldViewModel: FieldViewModel,
+    selectField: (Field) -> Unit,
     defaultnearbyfieldcontroller: NearbyFieldsDetectionController
 ) {
 
@@ -145,8 +143,8 @@ fun MapScreen(
 
 
     // Define map properties and UI settings
-    var uiSettings by remember { mutableStateOf(MapUiSettings()) }
-    var properties by remember {
+    val uiSettings by remember { mutableStateOf(MapUiSettings()) }
+    val properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
 
@@ -170,7 +168,6 @@ fun MapScreen(
                         position = LatLng(it.latitude, it.longitude)
                     ),
                     title = "You are here",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE) // Custom color for user marker
                 )
 
             }
@@ -179,24 +176,26 @@ fun MapScreen(
             val markersToDisplay =
                 if (filteredMarkers.isNotEmpty()) filteredMarkers else markers
             markersToDisplay.forEach { marker ->
-                Marker(
-                    state = MarkerState(
-                        position = LatLng(marker.latitude, marker.longitude)
-                    ),
+                MapMarker(
+                    context = context,
+                    position = LatLng(marker.latitude, marker.longitude),
                     title = marker.name,
-                    onClick = {
-                        fieldViewModel.setCurrentFieldState(marker)
-                        navController.navigate(Screens.Field.name)
-                        true // Indicate that the click event was handled
+                    snippet = "Marker in ${marker.name}",
+                    iconResourceId = R.drawable.soccer_field_seen_from_above_svgrepo_com
+                ) {
+                    // Handle marker click
+                    selectField(marker)
+                    navController.navigate(Screens.Field.name)
+                    true // Return true to indicate that the click event is consumed
+                }
 
-                    }
-                )
             }
 
         }
 
 
         // Da bih pokrenuo lokaction service, prethodno mora da bude odobreni fine i coarse location
+        // Na osnovu currentUserLocation pratim da li je korisnik odobrio lokaciju ili ne
         currentUserLocation?.let {
             IconButton(
                 onClick = { isServiceDialogOpen = true },
@@ -242,7 +241,6 @@ fun MapScreen(
                 onClick = { markerViewModel.removeFilters() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    // Todo: Smisli ako mozes bolji nacin
                     .padding(
                         top = 16.dp,
                         bottom = 24.dp,
@@ -263,9 +261,7 @@ fun MapScreen(
             ServiceControlDialog(
                 isServiceRunning = isServiceRunning,
                 onConfirm = {
-                    Log.d("AlertDialog", "Old isServiceRunning value: $isServiceRunning")
                     isServiceRunning = !isServiceRunning
-                    Log.d("AlertDialog", "New isServiceRunning value: $isServiceRunning")
                     saveServiceRunningState(context, isServiceRunning) // Save the new state
                     if (isServiceRunning) {
                         defaultnearbyfieldcontroller.startNearbyFieldsDetectionService()
@@ -302,7 +298,6 @@ fun MapScreen(
 }
 
 
-// TODO: PROCITAJ O OVOME, I POKUSAJ DA KORISTIS DATA STORE TAKODJE ISTRAZI I PREZENTACIJE
 fun saveServiceRunningState(context: Context, isRunning: Boolean) {
     val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
     val editor = sharedPreferences.edit()

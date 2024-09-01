@@ -1,6 +1,5 @@
 package com.example.footballfieldtracker.ui.layout.screens.fieldsscreen
 
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -49,6 +48,8 @@ import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.ui.Screens
 import com.example.footballfieldtracker.ui.layout.util.FilterFieldDialog
+import com.example.footballfieldtracker.ui.layout.util.extractAddressPart
+import com.example.footballfieldtracker.ui.layout.util.formatDate
 import com.example.footballfieldtracker.ui.viewmodels.FieldViewModel
 import com.example.footballfieldtracker.ui.viewmodels.MarkerViewModel
 import com.example.footballfieldtracker.ui.viewmodels.UserViewModel
@@ -63,7 +64,7 @@ fun FieldsScreen(
     navController: NavHostController,
     userViewModel: UserViewModel,
     markerViewModel: MarkerViewModel,
-    fieldViewModel: FieldViewModel,
+    selectField: (Field) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -84,7 +85,7 @@ fun FieldsScreen(
                 FieldCard(
                     field = marker,
                     navController = navController,
-                    fieldViewModel = fieldViewModel
+                    selectField = { selectField(it) }
                 )
             }
         }
@@ -119,13 +120,11 @@ fun FieldsScreen(
         }
 
 
-        // Kad sam ovo stavio inzad google map nije htelo da se prikaze a kad sam ovde stavio hoce!!
         if (filteredMarkers.isNotEmpty()) {
             IconButton(
                 onClick = { markerViewModel.removeFilters() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    // Todo: Smisli ako mozes bolji nacin
                     .padding(
                         top = 16.dp,
                         bottom = 24.dp,
@@ -149,7 +148,7 @@ fun FieldsScreen(
 fun FieldCard(
     field: Field,
     navController: NavHostController,
-    fieldViewModel: FieldViewModel,
+    selectField: (Field) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -158,13 +157,12 @@ fun FieldCard(
     val formattedAddress = extractAddressPart(field.address)
 
 
-
     Box(
         modifier = modifier.padding(12.dp)
     ) {
         Card(
             modifier = modifier.clickable {
-                fieldViewModel.setCurrentFieldState(field)
+                selectField(field)
                 navController.navigate(Screens.Field.name)
             }
         ) {
@@ -257,23 +255,5 @@ fun FieldCard(
     }
 }
 
-fun formatDate(timestamp: Timestamp): String {
-    val date: Date = timestamp.toDate()
-    val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault())
-    return dateFormat.format(date)
-}
-
-fun extractAddressPart(address: String): String {
-    // Podeli adresu na delove koristeći zarez kao separator
-    val parts = address.split(",")
-
-    // Ako postoji više od jednog dela, uzmi sve delove nakon prvog zareza
-    return if (parts.size > 1) {
-        // Spoji sve delove nakon prvog zareza u jedan string i ukloni nepotrebne prazne prostore
-        parts.takeLast(2).joinToString(",").trim()
-    } else {
-        ""
-    }
-}
 
 

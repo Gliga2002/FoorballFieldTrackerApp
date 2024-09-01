@@ -1,4 +1,4 @@
-package com.example.locationserviceexample.utils
+package com.example.footballfieldtracker.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -24,7 +24,7 @@ class DefaultLocationClient(
 
     @SuppressLint("MissingPermission")
     override fun getLocationUpdates(interval: Long): Flow<Location> {
-        // koristi callbackFlow, bice vezana za courtine kada se pozove .launchIn()
+        // Koristi callbackFlow, bice vezana za courtine kada se pozove .launchIn()
         return callbackFlow {
             if(!hasLocationPermissions(context)) {
                 throw LocationClient.LocationException("Missing location permission")
@@ -56,8 +56,8 @@ class DefaultLocationClient(
                 Looper.getMainLooper()
             )
 
-            // ovo se poziva kada cancel corotine odakle se ova goranj funkciaj pozvala (.launchIn())
-            // !!!u mom slucaju ViewModelScope, kada se taj scope prekine, ovo se izvrsava!!!!
+            // Ovo se poziva kada cancel corotine odakle se ova gornja funkciaj pozvala - getLocationUpdates (.launchIn())
+            // U mom slucaju ViewModelScope, kada se taj scope prekine, ovo se izvrsava
             awaitClose {
                 client.removeLocationUpdates(locationCallback)
             }

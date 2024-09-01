@@ -10,7 +10,6 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 
 // mogao bi i ovde interfejs, jer ces da ga koristis kao DI u viewModel i dobar je za mocking
@@ -20,18 +19,16 @@ class UserRepository(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage
 ) {
-
-    private var listenerRegistration: ListenerRegistration? = null
-    // current user i location mogu ti budu data source ali ne mora se bakces
-    private var userListenerRegistration: ListenerRegistration? = null
-
-
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
-    // Dodao
+    private var userListenerRegistration: ListenerRegistration? = null
+
+
     private val _allUsers = MutableStateFlow<List<User>>(emptyList())
     val allUsers: StateFlow<List<User>> = _allUsers
+
+    private var allUserslistenerRegistration: ListenerRegistration? = null
 
     private val _currentUserLocation = MutableStateFlow<LocationData?>(null)
     val currentUserLocation: StateFlow<LocationData?> = _currentUserLocation
@@ -117,9 +114,7 @@ class UserRepository(
     }
 
     fun startObservingUser()  {
-        Log.i("UserRepository", "Ovde")
         val userId = auth.currentUser?.uid ?: return
-        Log.i("UserRepository", userId)
         val userDocRef = firestore.collection("users").document(userId)
 
         userListenerRegistration = userDocRef.addSnapshotListener { snapshot, exception ->
@@ -148,7 +143,7 @@ class UserRepository(
 
     // Dobro je
     fun fetchAllUsers() {
-        listenerRegistration = firestore.collection("users")
+        allUserslistenerRegistration = firestore.collection("users")
             .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
@@ -167,7 +162,7 @@ class UserRepository(
     }
 
     fun stopFetchAllUsers() {
-        listenerRegistration?.remove()
+        allUserslistenerRegistration?.remove()
     }
 
 

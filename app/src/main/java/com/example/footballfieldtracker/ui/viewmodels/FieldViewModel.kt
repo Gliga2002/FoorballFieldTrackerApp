@@ -1,7 +1,5 @@
 package com.example.footballfieldtracker.ui.viewmodels
 
-import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,16 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.footballfieldtracker.data.model.Field
-import com.example.footballfieldtracker.data.model.LocationData
 import com.example.footballfieldtracker.data.model.Review
 import com.example.footballfieldtracker.data.repository.FieldRepository
-import com.example.footballfieldtracker.data.repository.MarkerRepository
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class FieldViewModel(
-    // ne treba ti markerRepository
    private val fieldRepository: FieldRepository
 ) : ViewModel() {
 
@@ -32,7 +26,6 @@ class FieldViewModel(
         selectedFieldState = field
     }
 
-    // Todo: Hocu da prestanem da slusam kad se navigiram nazad, smisli kako
     val selectedField: StateFlow<Field?> get() = fieldRepository.selectedField
 
 
