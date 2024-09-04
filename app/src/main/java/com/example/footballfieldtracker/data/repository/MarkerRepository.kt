@@ -65,9 +65,9 @@ class MarkerRepository(
     }
 
     // Funkcija za uklanjanje listener-a
-    fun removeMarkersListener() {
-        markersListenerRegistration?.remove()
-    }
+//    fun removeMarkersListener() {
+//        markersListenerRegistration?.remove()
+//    }
 
 
     // Funkcija za dodavanje LocationData u kolekciju markers s automatski generisanim ID-om

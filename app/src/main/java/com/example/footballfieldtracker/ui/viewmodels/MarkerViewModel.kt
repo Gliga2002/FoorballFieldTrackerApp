@@ -116,10 +116,10 @@ class MarkerViewModel(private val markerRepository: MarkerRepository) : ViewMode
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        markerRepository.removeMarkersListener()
-    }
+//    override fun onCleared() {
+//        super.onCleared()
+//        markerRepository.removeMarkersListener()
+//    }
 
 }
 

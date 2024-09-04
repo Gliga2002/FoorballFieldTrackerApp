@@ -16,26 +16,23 @@ import com.example.footballfieldtracker.R
 import com.example.footballfieldtracker.data.model.Field
 import com.example.footballfieldtracker.data.model.LocationData
 
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 
 class NearbyFieldsDetection : Service() {
 
-    // Nemoj nista da inicijalizujes, pre onCreate!! Koristi lateinit
     private lateinit var app: MainApplication
     private lateinit var currentUserLocation: StateFlow<LocationData?>
-    private lateinit var firestore: FirebaseFirestore
-    // ovo ovde je okej
+    private lateinit var markers: StateFlow<List<Field?>>
+
     private lateinit var notification: NotificationCompat.Builder
 
-
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -45,15 +42,15 @@ class NearbyFieldsDetection : Service() {
         super.onCreate()
         app = application as MainApplication
         currentUserLocation = app.container.userRepository.currentUserLocation
-        firestore = FirebaseFirestore.getInstance()
-        // inicijalizacija, kada se pozove, jednom se izvrsi, jos nije startovan
+        markers = app.container.markerRepository.markers
+
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when(intent?.action) {
+        when (intent?.action) {
             ACTION_START -> start()
             ACTION_STOP -> stop()
-
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -62,30 +59,32 @@ class NearbyFieldsDetection : Service() {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
-        notification = NotificationCompat.Builder( this, "location")
+        notification = NotificationCompat.Builder(this, "location")
             .setContentTitle("Searching nearby fields")
             .setContentText("There isn't any field nearby")
-            .setSmallIcon(R.drawable.visibility_24)
+            .setSmallIcon(R.drawable.search_24)
             .setStyle(
                 NotificationCompat
                     .BigPictureStyle()
                     .bigPicture(
-                       // hocu da dodam sliku iz drawable
                         BitmapFactory.decodeResource(resources, R.drawable.cartoon_detective)
                     )
             )
             .setOngoing(true)
-            .setContentIntent(pendingIntent) // Set the intent to be fired when notification is clicked
-            .setAutoCancel(true) // Remove notification when clicked
-
-
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
 
         startForeground(1, notification.build())
-        observeMarkers()
-
-
+        // Start observing location and markers changes
+        observeLocationChanges()
+        observeMarkerChanges()
     }
 
     private fun stop() {
@@ -95,67 +94,99 @@ class NearbyFieldsDetection : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // cancel Coroutine koju si gore kreirao
+        // Cancel Coroutine
         serviceScope.cancel()
     }
 
-
-    private fun observeMarkers() {
-        // Pretplata na promene u Firebase kolekciji
-        // Mogo si i iz repository, imas markere live, ili ovako
-        firestore.collection("markers")
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.w(TAG, "Listen failed.", e)
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && !snapshot.isEmpty) {
-                    val markers = snapshot.documents.mapNotNull { it.toObject(Field::class.java) }
-                    checkProximityToMarkers(markers)
+    private fun observeLocationChanges() {
+        serviceScope.launch {
+            currentUserLocation.collect { userLocation ->
+                userLocation?.let { location ->
+                    // Fetch markers from the StateFlow and check proximity
+                    checkProximityToMarkers(markers.value, location)
                 }
             }
+        }
     }
 
-    private fun checkProximityToMarkers(markers: List<Field>) {
-        // Proverite da li je trenutna lokacija unutar radijusa od 10km od nekog markera
-        val userLocation = currentUserLocation.value ?: return
-        markers.forEach { marker ->
-            val markerLocation = LocationData(marker.latitude, marker.longitude)
-            val distance = calculateDistance(userLocation, markerLocation)
-            if (distance < 10_000) { // 10km
-                // Ažurirajte notifikaciju
-                updateNotification(
-                    "Nearby field found: ${marker.name}",
-                    notification
-                )
+    private fun observeMarkerChanges() {
+        serviceScope.launch {
+            markers.collect { markerList ->
+                // Fetch current location and check proximity to new markers
+                currentUserLocation.value?.let { userLocation ->
+                    checkProximityToMarkers(markerList, userLocation)
+                }
             }
+        }
+    }
+
+    private fun checkProximityToMarkers(markers: List<Field?>, userLocation: LocationData) {
+        var nearbyFieldFound = false
+        markers.forEach { marker ->
+            marker?.let {
+                val markerLocation = LocationData(it.latitude, it.longitude)
+                val distance = calculateDistance(userLocation, markerLocation)
+                if (distance < 10_000) { // 10km
+                    if (!nearbyFieldFound) {
+                        // Ažurirajte obaveštenje sa statusom da je polje pronađeno
+                        updateNotification(
+                            "Nearby field found: ${it.name}",
+                            notification,
+                            isNearbyFieldFound = true
+                        )
+                        nearbyFieldFound = true
+                    }
+                }
+            }
+        }
+        if (!nearbyFieldFound) {
+            // Ažurirajte obaveštenje sa statusom da polje nije pronađeno
+            updateNotification(
+                "There isn't any field nearby",
+                notification,
+                isNearbyFieldFound = false
+            )
         }
     }
 
     private fun calculateDistance(location1: LocationData, location2: LocationData): Float {
         val results = FloatArray(1)
-        Location.distanceBetween(location1.latitude, location1.longitude, location2.latitude, location2.longitude, results)
+        Location.distanceBetween(
+            location1.latitude,
+            location1.longitude,
+            location2.latitude,
+            location2.longitude,
+            results
+        )
         return results[0]
     }
 
+    private fun updateNotification(
+        message: String,
+        notification: NotificationCompat.Builder,
+        isNearbyFieldFound: Boolean
+    ) {
+        // Odaberite sliku na osnovu toga da li je polje pronađeno
+        val pictureResId = if (isNearbyFieldFound) {
+            R.drawable.found
+        } else {
+            R.drawable.cartoon_detective
+        }
 
-    private fun updateNotification(message: String, notification: NotificationCompat.Builder) {
-            notification
-                .setContentText(message)
-                .setSmallIcon(R.drawable.visibility_24)
-                .setStyle(
-                    NotificationCompat.BigPictureStyle()
-                    .bigPicture(BitmapFactory.decodeResource(resources, R.drawable.found))
-                )
-                .setOngoing(true)
+        // Ažurirajte obaveštenje
+        notification
+            .setContentText(message)
+            .setSmallIcon(R.drawable.search_24)
+            .setStyle(
+                NotificationCompat.BigPictureStyle()
+                    .bigPicture(BitmapFactory.decodeResource(resources, pictureResId))
+            )
+            .setOngoing(true)
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(1, notification.build())
     }
-
-
-
 
 
     companion object {
