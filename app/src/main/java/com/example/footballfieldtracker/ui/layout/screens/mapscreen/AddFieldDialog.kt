@@ -54,7 +54,10 @@ fun AddFieldDialog(
 
 
     AlertDialog(
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = {
+            onDismiss()
+            markerViewModel.resetState()
+        },
         title = { Text("Add field") },
         text = {
             Column(
@@ -149,7 +152,10 @@ fun AddFieldDialog(
             }
         },
         dismissButton = {
-            Button(onClick = { onDismiss() }) {
+            Button(onClick = {
+                onDismiss()
+                markerViewModel.resetState()
+            }) {
                 Text("Cancel")
             }
         }

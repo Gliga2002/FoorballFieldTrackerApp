@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -141,6 +142,7 @@ class MarkerRepository(
         radius: Int?,
         currentLoc: LocationData?
     ) {
+        Log.i("ApplyFilters" , "Author: $author, Type: $type, Date: $date, Radius: $radius")
         val filteredList = _markers.value.filter { location ->
 
             var authorMatch = location.author.contains(author, ignoreCase = true)
@@ -188,13 +190,16 @@ class MarkerRepository(
 
     // Mogao si i sa CompareTo
     private fun isDateInRange(locationDate: Date, filterDate: String): Boolean {
-        val dateFormat = SimpleDateFormat("dd.MM.yyyy.", Locale.US)
+        val locale = Locale.getDefault()
+        val dateFormat = SimpleDateFormat.getDateInstance(DateFormat.DEFAULT, locale)
         val filterDateParts = filterDate.split(" - ")
 
         try {
             if (filterDateParts.size == 2) {
                 val startDate = dateFormat.parse(filterDateParts[0])
                 val endDate = dateFormat.parse(filterDateParts[1])
+
+                Log.i("ApplyFilters", "StartDate: $startDate, EndDate $endDate - LocationDate: $locationDate")
 
 
                 if (startDate != null && endDate != null) {

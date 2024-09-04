@@ -1,5 +1,6 @@
 package com.example.footballfieldtracker.ui.layout.util
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,9 +82,11 @@ fun DatePickerDialog(
 }
 
 private fun getDateString(start: Long, end: Long): String {
+    Log.i("ApplyFilters", "StartLong: $start, EndLong: $end")
     // Format a date range as a string
     val startStr = DateFormat.getDateInstance().format(Date(start))
     val endStr = DateFormat.getDateInstance().format(Date(end))
+    Log.i("ApplyFilters", "StartStr: $startStr, EndStr: $endStr")
     return "$startStr - $endStr"
 }
 

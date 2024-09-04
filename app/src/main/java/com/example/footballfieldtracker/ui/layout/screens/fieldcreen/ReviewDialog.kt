@@ -37,7 +37,10 @@ fun ReviewDialog(
 
 
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = {
+            onDismissRequest()
+            fieldViewModel.resetReviewData()
+        },
         title = { Text("Add Review") },
         text = {
             Column {
@@ -110,7 +113,10 @@ fun ReviewDialog(
         },
         dismissButton = {
             Button(
-                onClick = onDismissRequest
+                onClick = {
+                    onDismissRequest()
+                    fieldViewModel.resetReviewData()
+                }
             ) {
                 Text("Cancel")
             }

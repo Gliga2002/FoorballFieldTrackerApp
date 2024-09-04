@@ -43,7 +43,10 @@ fun FilterFieldDialog(
 
     // Show the DateRangePicker within the main dialog
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            onDismiss()
+            markerViewModel.resetFilter()
+        },
         title = { Text("Filter fields") },
         text = {
             Column {
@@ -127,7 +130,7 @@ fun FilterFieldDialog(
 
 
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.Center,
@@ -145,7 +148,7 @@ fun FilterFieldDialog(
                 // Date Range picker
                 if (showDatePicker) {
                     DatePickerDialog(
-                        setDateRange = {markerViewModel.dateRange = it}
+                        setDateRange = { markerViewModel.dateRange = it }
                     ) {
                         showDatePicker = false
                     }
@@ -156,13 +159,21 @@ fun FilterFieldDialog(
             Button(
                 onClick = {
                     markerViewModel.applyFilters(currentUserLocation) { isFound ->
-                       if (isFound) {
-                           markerViewModel.resetFilter()
-                           onDismiss()
-                           Toast.makeText(context, "Filter successfully applied.", Toast.LENGTH_SHORT).show()
-                       } else {
-                           Toast.makeText(context, "We were unable to find any data for the requested field filter.", Toast.LENGTH_SHORT).show()
-                       }
+                        if (isFound) {
+                            markerViewModel.resetFilter()
+                            onDismiss()
+                            Toast.makeText(
+                                context,
+                                "Filter successfully applied.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "We were unable to find any data for the requested field filter.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
 
                 }
@@ -171,7 +182,10 @@ fun FilterFieldDialog(
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            Button(onClick = {
+                onDismiss()
+                markerViewModel.resetFilter()
+            }) {
                 Text("Cancel")
             }
         }
