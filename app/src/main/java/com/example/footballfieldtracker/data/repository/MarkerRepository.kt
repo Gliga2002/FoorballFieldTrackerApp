@@ -47,20 +47,21 @@ class MarkerRepository(
         val markersCollectionRef = firestore.collection("markers")
 
         // Dodajte listener za promene u kolekciji
-        markersListenerRegistration = markersCollectionRef.addSnapshotListener { snapshot, exception ->
-            if (exception != null) {
-                // Handle error
-                return@addSnapshotListener
+        markersListenerRegistration =
+            markersCollectionRef.addSnapshotListener { snapshot, exception ->
+                if (exception != null) {
+                    // Handle error
+                    return@addSnapshotListener
+                }
+
+                // Mapirajte rezultate u listu Marker
+                val updatedMarkers = snapshot?.documents?.mapNotNull { document ->
+                    document.toObject(Field::class.java)
+                } ?: emptyList()
+
+                // Ažurirajte _markers sa novim podacima
+                _markers.value = updatedMarkers
             }
-
-            // Mapirajte rezultate u listu Marker
-            val updatedMarkers = snapshot?.documents?.mapNotNull { document ->
-                document.toObject(Field::class.java)
-            } ?: emptyList()
-
-            // Ažurirajte _markers sa novim podacima
-            _markers.value = updatedMarkers
-        }
 
     }
 
@@ -142,7 +143,7 @@ class MarkerRepository(
         radius: Int?,
         currentLoc: LocationData?
     ) {
-        Log.i("ApplyFilters" , "Author: $author, Type: $type, Date: $date, Radius: $radius")
+        Log.i("ApplyFilters", "Author: $author, Type: $type, Date: $date, Radius: $radius")
         val filteredList = _markers.value.filter { location ->
 
             var authorMatch = location.author.contains(author, ignoreCase = true)
@@ -158,15 +159,21 @@ class MarkerRepository(
 
 
             val withinRadius: Boolean
+            // radijus je null ako korisnik ne odobri da se prati lokacija, tako da apliakciaj i dalje radi
             if (radius != null && currentLoc != null) {
                 // Check if the marker is within the specified radius
-                val distance = calculateDistance(
-                    currentLoc.latitude,
-                    currentLoc.longitude,
-                    location.latitude,
-                    location.longitude
-                )
-                withinRadius = distance < radius
+                // Ako korisnik nije nista uneo sto se radijusa tice, onda se gleda kao tacno
+                if (radius == 0) {
+                    withinRadius = true
+                } else {
+                    val distance = calculateDistance(
+                        currentLoc.latitude,
+                        currentLoc.longitude,
+                        location.latitude,
+                        location.longitude
+                    )
+                    withinRadius = distance < radius
+                }
 
             } else {
                 withinRadius = true
@@ -199,7 +206,10 @@ class MarkerRepository(
                 val startDate = dateFormat.parse(filterDateParts[0])
                 val endDate = dateFormat.parse(filterDateParts[1])
 
-                Log.i("ApplyFilters", "StartDate: $startDate, EndDate $endDate - LocationDate: $locationDate")
+                Log.i(
+                    "ApplyFilters",
+                    "StartDate: $startDate, EndDate $endDate - LocationDate: $locationDate"
+                )
 
 
                 if (startDate != null && endDate != null) {
